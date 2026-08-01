@@ -445,6 +445,7 @@ function patient(id){return state.patients.find(p=>p.id===id) || {id,name:"Patie
 function appt(id){return state.appointments.find(a=>a.id===id);}
 function upcomingAppt(pid){return state.appointments.filter(a=>a.patientId===pid && a.status==="Booked" && a.date>=TODAY).sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time))[0];}
 function todayAppointments(){return state.appointments.filter(a=>a.date===TODAY && a.status!=="Cancelled").sort((x,y)=>x.time.localeCompare(y.time));}
+function futureAppointments(){return state.appointments.filter(a=>a.date>TODAY && a.status==="Booked").sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time));}
 function activeActions(){return state.patients.filter(p=>p.nextAction && !/no further action/i.test(p.nextAction));}
 function actionCategory(p){
   if(!p.nextAction || /no further action/i.test(p.nextAction)) return "Completed / No longer active";
@@ -524,10 +525,11 @@ function handleHash(){
 }
 window.addEventListener("hashchange",handleHash);
 function viewToday(){
-  const p=state.profile, appts=todayAppointments(), attention=activeActions().filter(p=>["Due Today","Overdue"].includes(actionCategory(p)));
+  const p=state.profile, appts=todayAppointments(), upcoming=futureAppointments(), attention=activeActions().filter(p=>["Due Today","Overdue"].includes(actionCategory(p)));
   return `<div class="page-head"><div><h1>Today</h1><div class="meta"><img class="doctor-photo" src="${esc(p.photo)}" alt="" style="vertical-align:middle;margin-right:10px"> ${esc(p.name)} · ${fmtDate(TODAY)} · ${appts.length} appointments · ${attention.length} patient actions requiring attention</div></div><div class="actions"><button class="btn" onclick="location.hash='book'">Preview public booking</button><button class="btn primary" onclick="openPatientDrawer()">Add Patient</button></div></div>
   <section class="summary">${sum("Appointments today",appts.length,"Chronological working list")}${sum("Booked remaining",appts.filter(a=>a.status==="Booked").length,"Still to be seen")}${sum("Needs attention",attention.length,"Due or overdue actions","urgent")}${sum("Active journeys",activeActions().length,"Patients with a next step","warn")}</section>
   <section class="sec"><div class="sec-head"><h2>Doctor's Day</h2><span class="note">Appointment cards include context, not just time.</span></div><div class="timeline-list">${appts.map(appointmentCard).join("") || empty("No appointments today","Published slots remain visible on the booking page.")}</div></section>
+  <section class="sec"><div class="sec-head"><h2>Upcoming Appointments</h2><span class="note">${upcoming.length} future booking${upcoming.length===1?"":"s"} scheduled</span></div><div class="timeline-list">${upcoming.slice(0,8).map(appointmentCard).join("") || empty("No future appointments","Future bookings will appear here after they are scheduled.")}</div></section>
   <section class="sec"><div class="sec-head"><h2>Needs Attention</h2><span class="note">Workflow reminders, not clinical warnings.</span></div><div class="attention-grid">${attention.map(attentionCard).join("") || empty("No urgent patient actions","Patients with future review dates remain in Follow-ups.")}</div></section>`;
 }
 function sum(k,v,d,cls=""){return `<div class="sumcard ${cls}"><div class="k">${k}</div><div class="v num">${v}</div><div class="d">${d}</div></div>`;}
@@ -535,7 +537,7 @@ function appointmentCard(ap){
   const p=patient(ap.patientId), isNew=!p.latestDate, statusCls=ap.status==="Completed"?"green":ap.status==="Cancelled"?"red":"blue";
   return `<article class="appt-card"><div><div class="time">${displayTime(ap.time)}</div><div class="sub">${ap.date===TODAY?"Today":fmtDay(ap.date)}</div>${tag(ap.status,statusCls)}</div>
   <div><div class="name">${esc(p.name)}</div><div class="sub">${esc(p.age)} · ${esc(p.gender)} · ${isNew?"New Patient":"Returning Patient"}</div><div class="label" style="margin-top:10px">Reason</div><div>${esc(ap.reason)}</div></div>
-  <div class="stack"><div><div class="label">${isNew?"Previous history":"Last consultation"}</div><div>${isNew?"No previous consultation history":`${fmtDate(p.latestDate,"short")} · ${esc(p.plan||"Plan not recorded")}`}</div></div><div><div class="label">Expected today</div><div>${isNew?"Initial assessment and decide next step":esc(p.nextAction||"Review patient concern")}</div></div></div>
+  <div class="stack"><div><div class="label">${isNew?"Previous history":"Last consultation"}</div><div>${isNew?"No previous consultation history":`${fmtDate(p.latestDate,"short")} · ${esc(p.plan||"Plan not recorded")}`}</div></div><div><div class="label">${ap.date===TODAY?"Expected today":"Expected visit"}</div><div>${isNew?"Initial assessment and decide next step":esc(p.nextAction||"Review patient concern")}</div></div></div>
   <div class="actions"><button class="btn small" onclick="go('patient','${p.id}')">Open Patient</button>${ap.status==="Booked"?`<button class="btn small primary" onclick="openConsultDrawer('${ap.id}')">Complete Consultation</button><button class="btn small danger" onclick="cancelAppointment('${ap.id}')">Cancel</button>`:""}</div></article>`;
 }
 function attentionCard(p){
