@@ -105,7 +105,7 @@ const NEXT_STEP_LABELS = {
   none:"No further action currently"
 };
 let state = loadState();
-let ui = {screen:"today", patientId:null, week:"current", patientFilter:"All", patientSearch:"", selectedSlot:null};
+let ui = {screen:"today", patientId:null, week:"current", patientFilter:"All", patientSearch:"", selectedSlot:null, authMode:"login"};
 let supabaseClient = initSupabaseClient();
 let currentUser = null;
 let authReady = false;
@@ -216,7 +216,7 @@ async function loadDoctorProfile(){
   if(!data){
     const minimum = doctorRowFromProfile({
       ...state.profile,
-      name: currentUser.email ? currentUser.email.split("@")[0].replace(/[._-]+/g," ") : "Doctor",
+      name: currentUser.user_metadata?.full_name || (currentUser.email ? currentUser.email.split("@")[0].replace(/[._-]+/g," ") : "Doctor"),
       email: currentUser.email || state.profile.email,
       specialty: "General Practitioner",
       experience: "0",
@@ -472,7 +472,8 @@ function isLoggedIn(){return supabaseClient ? !!currentUser : localStorage.getIt
 function renderLoading(){document.getElementById("root").innerHTML = `<main class="login-screen"><section class="login-panel"><div class="login-box"><h2>Loading workspace</h2><p class="hint">Checking doctor session.</p></div></section></main>`;}
 function renderLogin(){
   const p=state.profile;
-  document.getElementById("root").innerHTML = `<main class="login-screen"><section class="login-brand"><div><div class="brand"><div class="mark">D</div><span>Practice Workspace</span></div><h1>Start the clinic day clearly.</h1><p>A lightweight workspace for appointments, patient context, consultation decisions and follow-ups.</p><ul><li>See who you are seeing today</li><li>Open patient context before consultation</li><li>Track the one next action that matters</li></ul></div><div class="login-foot">${supabaseClient?"Supabase Auth enabled":"Front-end prototype · local fallback"}</div></section><section class="login-panel"><div class="login-box"><h2>Doctor Login</h2><p class="hint">Sign in to continue to ${esc(p.name)}'s workspace.</p><form class="login-card" onsubmit="loginDoctor(event)"><div class="field"><label>Email</label><input id="loginId" value="${esc(p.email)}" autocomplete="username"></div><div class="field"><label>Password</label><input id="loginPw" type="password" value="${supabaseClient?"":"demo123"}" autocomplete="current-password"></div><button class="btn primary full" type="submit">Enter Workspace</button><div class="login-demo">${supabaseClient?"Use a Supabase doctor account. A profile row will be created after first login if needed.":"Demo only: any email/mobile and password will open the prototype."}</div></form><button class="btn full" style="margin-top:12px" onclick="location.hash='book'">Preview public booking page</button></div></section></main>`;
+  const isSignup = ui.authMode === "signup";
+  document.getElementById("root").innerHTML = `<main class="login-screen"><section class="login-brand"><div><div class="brand"><div class="mark">D</div><span>Practice Workspace</span></div><h1>Start the clinic day clearly.</h1><p>A lightweight workspace for appointments, patient context, consultation decisions and follow-ups.</p><ul><li>See who you are seeing today</li><li>Open patient context before consultation</li><li>Track the one next action that matters</li></ul></div><div class="login-foot">${supabaseClient?"Supabase Auth enabled":"Front-end prototype · local fallback"}</div></section><section class="login-panel"><div class="login-box"><h2>${isSignup?"Create Doctor Login":"Doctor Login"}</h2><p class="hint">${isSignup?"Create a login ID and password for a doctor workspace.":"Sign in to continue to your doctor workspace."}</p><div class="seg" style="margin-bottom:12px;width:100%"><button class="${!isSignup?'active':''}" style="flex:1" onclick="ui.authMode='login';render()">Login</button><button class="${isSignup?'active':''}" style="flex:1" onclick="ui.authMode='signup';render()">Create Login</button></div><form class="login-card" onsubmit="${isSignup?"createDoctorLogin(event)":"loginDoctor(event)"}">${isSignup?`<div class="field"><label>Doctor name</label><input id="signupName" autocomplete="name"></div>`:""}<div class="field"><label>Email</label><input id="loginId" type="email" value="${!isSignup?esc(p.email):""}" autocomplete="username"></div><div class="field"><label>Password</label><input id="loginPw" type="password" value="${supabaseClient?"":"demo123"}" autocomplete="${isSignup?"new-password":"current-password"}"></div>${isSignup?`<div class="field"><label>Confirm password</label><input id="loginPw2" type="password" autocomplete="new-password"></div>`:""}<button class="btn primary full" type="submit">${isSignup?"Create Login":"Enter Workspace"}</button><div class="login-demo">${supabaseClient?(isSignup?"A doctor profile row will be created automatically after confirmation/sign-in.":"Use your Supabase doctor account."):"Demo only: any email/mobile and password will open the prototype."}</div></form><button class="btn full" style="margin-top:12px" onclick="location.hash='book'">Preview public booking page</button></div></section></main>`;
 }
 async function loginDoctor(event){
   event.preventDefault();
@@ -484,6 +485,26 @@ async function loginDoctor(event){
     await loadPublicDoctorProfile();
   }
   localStorage.setItem(LOGIN_KEY,"yes");location.hash="";render();toast("Welcome back.");
+}
+async function createDoctorLogin(event){
+  event.preventDefault();
+  const email=val("loginId"), password=val("loginPw"), confirm=val("loginPw2"), name=val("signupName");
+  if(!email||!password||!confirm) return toast("Email and password are required.");
+  if(password!==confirm) return toast("Passwords do not match.");
+  if(supabaseClient){
+    const {data,error} = await supabaseClient.auth.signUp({email, password, options:{data:{full_name:name || email.split("@")[0]}}});
+    if(error) return toast(error.message);
+    if(data.session){
+      currentUser = data.user;
+      await loadPracticeData();
+      await loadPublicDoctorProfile();
+      localStorage.setItem(LOGIN_KEY,"yes");location.hash="";render();toast("Login created.");
+      return;
+    }
+    ui.authMode="login";render();toast("Login created. Check email to confirm, then sign in.");
+    return;
+  }
+  localStorage.setItem(LOGIN_KEY,"yes");location.hash="";render();toast("Demo login created.");
 }
 async function logoutDoctor(){if(supabaseClient) await supabaseClient.auth.signOut();currentUser=null;localStorage.removeItem(LOGIN_KEY);location.hash="";render();}
 function sidebar(){
@@ -866,7 +887,7 @@ function val(id){const el=document.getElementById(id);return el?el.value.trim():
 function setVal(id,value){const el=document.getElementById(id);if(el) el.value=value;}
 function empty(h,p){return `<div class="empty"><h3>${esc(h)}</h3>${p?`<p>${esc(p)}</p>`:""}</div>`;}
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200);}
-function resetDemo(){localStorage.removeItem(STORE_KEY);state=loadState();ui={screen:"today",patientId:null,week:"current",patientFilter:"All",patientSearch:"",selectedSlot:null};location.hash="";render();toast("Demo data reset.");}
+function resetDemo(){localStorage.removeItem(STORE_KEY);state=loadState();ui={screen:"today",patientId:null,week:"current",patientFilter:"All",patientSearch:"",selectedSlot:null,authMode:"login"};location.hash="";render();toast("Demo data reset.");}
 boot();
 </script>
 </body>
