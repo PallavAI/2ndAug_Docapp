@@ -455,7 +455,7 @@ function actionCategory(p){
 }
 function tag(text, cls="grey"){return `<span class="tag t-${cls}">${esc(text)}</span>`;}
 function render(){
-  if(location.hash.startsWith("#book")) return renderBooking();
+  if(isBookingRoute()) return renderBooking();
   if(!authReady) return renderLoading();
   if(!isLoggedIn()) return renderLogin();
   const root=document.getElementById("root");
@@ -595,6 +595,8 @@ function viewPatient(pid){
   <section class="card" style="margin-top:14px"><h2>Patient History</h2><div class="history">${p.history.slice().reverse().map(eventRow).join("")}</div></section>`;
 }
 function eventRow(e){return `<div class="event"><div class="date">${fmtDate(e.date,"short")}</div><div><h3>${esc(e.type)}</h3>${e.reason?`<p><b>Reason:</b> ${esc(e.reason)}</p>`:""}${e.assessment?`<p><b>Assessment:</b> ${esc(e.assessment)}</p>`:""}${e.plan?`<p><b>Plan:</b> ${esc(e.plan)}</p>`:""}${e.next?`<p><b>Next:</b> ${esc(e.next)}</p>`:""}${e.detail?`<p>${esc(e.detail)}</p>`:""}</div></div>`;}
+function isBookingRoute(){return location.hash.startsWith("#book") || location.pathname.split("/").includes("book");}
+function workspaceUrl(){return location.pathname.split("/").includes("book") ? "/" : location.href.split("#")[0];}
 function renderBooking(){
   const requestedSlug = bookingSlugFromHash();
   const activeSlug = requestedSlug || "__first__";
@@ -610,12 +612,14 @@ function renderBooking(){
   }
   const p=publicBookingProfile(), available=Object.entries(state.availability).filter(([k,v])=>v==="available").map(([k])=>{const [date,time]=k.split("|");return {date,time};}).filter(s=>s.date>=TODAY).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
   const grouped={}; available.forEach(s=>(grouped[s.date]??=[]).push(s.time));
-  document.getElementById("root").innerHTML = `<div class="book-shell"><div class="actions" style="margin-bottom:12px"><button class="btn" onclick="location.hash=''">Back to doctor workspace</button></div><section class="book-hero" style="grid-template-columns:1fr auto"><div><h1>${esc(p.name)}</h1><div>${esc(p.specialty)}</div><div class="sub">${esc(p.experience)} years experience · ${esc(p.clinic)}${p.location?` · ${esc(p.location)}`:""}</div></div><div>${p.fee?tag(`Rs ${p.fee} fee`,"green"):""}</div></section><div class="book-layout"><section class="date-slots">${Object.keys(grouped).map(d=>`<div class="date-block"><div class="name">${fmtDay(d)}</div><div class="slot-row">${grouped[d].map(t=>`<button class="slot-pill ${ui.selectedSlot===slotKey(d,t)?'active':''}" onclick="ui.selectedSlot='${slotKey(d,t)}';renderBooking()">${displayTime(t)}</button>`).join("")}</div></div>`).join("") || empty("No available slots","The doctor can publish availability from Calendar.")}</section><aside class="card"><h2>Book Appointment</h2><div id="bookingConfirm"></div><div class="form-grid"><div class="field full"><label>Selected slot</label><input readonly value="${ui.selectedSlot?`${fmtDate(ui.selectedSlot.split('|')[0])} · ${displayTime(ui.selectedSlot.split('|')[1])}`:'Choose a slot'}"></div><div class="field full"><label>Full name *</label><input id="bkName"></div><div class="field full"><label>Mobile number *</label><input id="bkMobile"></div><div class="field full"><label>Email *</label><input id="bkEmail" type="email"></div><div class="field full"><label>Reason for visit *</label><textarea id="bkReason"></textarea></div><div class="field"><label>Age</label><input id="bkAge"></div><div class="field"><label>Gender</label><select id="bkGender"><option value="">Select</option><option>Female</option><option>Male</option><option>Other</option></select></div></div><button class="btn primary full" style="margin-top:12px" onclick="bookPublicAppointment()">Book Appointment</button></aside></div></div>`;
+  document.getElementById("root").innerHTML = `<div class="book-shell"><div class="actions" style="margin-bottom:12px"><button class="btn" onclick="location.href=workspaceUrl()">Back to doctor workspace</button></div><section class="book-hero" style="grid-template-columns:1fr auto"><div><h1>${esc(p.name)}</h1><div>${esc(p.specialty)}</div><div class="sub">${esc(p.experience)} years experience · ${esc(p.clinic)}${p.location?` · ${esc(p.location)}`:""}</div></div><div>${p.fee?tag(`Rs ${p.fee} fee`,"green"):""}</div></section><div class="book-layout"><section class="date-slots">${Object.keys(grouped).map(d=>`<div class="date-block"><div class="name">${fmtDay(d)}</div><div class="slot-row">${grouped[d].map(t=>`<button class="slot-pill ${ui.selectedSlot===slotKey(d,t)?'active':''}" onclick="ui.selectedSlot='${slotKey(d,t)}';renderBooking()">${displayTime(t)}</button>`).join("")}</div></div>`).join("") || empty("No available slots","The doctor can publish availability from Calendar.")}</section><aside class="card"><h2>Book Appointment</h2><div id="bookingConfirm"></div><div class="form-grid"><div class="field full"><label>Selected slot</label><input readonly value="${ui.selectedSlot?`${fmtDate(ui.selectedSlot.split('|')[0])} · ${displayTime(ui.selectedSlot.split('|')[1])}`:'Choose a slot'}"></div><div class="field full"><label>Full name *</label><input id="bkName"></div><div class="field full"><label>Mobile number *</label><input id="bkMobile"></div><div class="field full"><label>Email *</label><input id="bkEmail" type="email"></div><div class="field full"><label>Reason for visit *</label><textarea id="bkReason"></textarea></div><div class="field"><label>Age</label><input id="bkAge"></div><div class="field"><label>Gender</label><select id="bkGender"><option value="">Select</option><option>Female</option><option>Male</option><option>Other</option></select></div></div><button class="btn primary full" style="margin-top:12px" onclick="bookPublicAppointment()">Book Appointment</button></aside></div></div>`;
 }
 function bookingSlugFromHash(){
   const h = location.hash.replace(/^#/,"");
-  if(!h.startsWith("book/")) return "";
-  return h.split("/")[1] || "";
+  if(h.startsWith("book/")) return h.split("/")[1] || "";
+  const parts = location.pathname.split("/").filter(Boolean);
+  const bookIndex = parts.indexOf("book");
+  return bookIndex >= 0 ? (parts[bookIndex + 1] || "") : "";
 }
 function publicBookingProfile(){
   if(publicDoctorProfile) return {

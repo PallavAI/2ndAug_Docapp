@@ -6,7 +6,7 @@ Static HTML/CSS/JavaScript MVP for an independent doctor practice workflow.
 
 - Main app: `outputs/index.html`
 - Supabase browser config: `outputs/supabase-config.js`
-- Vercel import recommendation: set the Vercel root directory to `outputs`
+- Vercel import recommendation: deploy from the repository root. `vercel.json` routes `/` and `/book/<doctor-slug>` to the static app in `outputs`.
 
 ## Supabase
 

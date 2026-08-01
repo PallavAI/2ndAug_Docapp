@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {"source": "/", "destination": "/outputs/index.html"},
+    {"source": "/book/:slug*", "destination": "/outputs/index.html"},
+    {"source": "/supabase-config.js", "destination": "/outputs/supabase-config.js"}
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {"key": "X-Content-Type-Options", "value": "nosniff"},
+        {"key": "Referrer-Policy", "value": "strict-origin-when-cross-origin"}
+      ]
+    }
+  ]
+}
