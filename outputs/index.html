@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Doctor Practice App Prototype</title>
+<style>
+:root{
+  --navy:#12312d; --navy-2:#18463f; --green:#236257; --mint:#eaf2ee;
+  --ink:#17211f; --text:#2b3633; --muted:#687670; --soft:#8b9792;
+  --bg:#f5f7f3; --surface:#fff; --line:#dbe4e0; --line2:#edf2ef;
+  --blue:#2d5fd2; --blue-bg:#edf3ff; --blue-line:#cfddff;
+  --amber:#a45f14; --amber-bg:#fff4e6; --amber-line:#f5d6aa;
+  --red:#b7382f; --red-bg:#fff0ee; --red-line:#f3c9c4;
+  --ok:#22704d; --ok-bg:#eaf6ef; --ok-line:#c6e5d2;
+  --shadow:0 1px 2px rgba(22,43,38,.04),0 12px 30px rgba(22,43,38,.06);
+  --r:8px;
+  --sans:Inter, "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:linear-gradient(180deg,#eef3ee 0,#f7f8f4 260px,#f5f7f3 100%);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;transition:background .14s,border-color .14s,box-shadow .14s,transform .14s}
+button:hover{transform:translateY(-1px)}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:8px;background:#fbfcfb;padding:10px 12px}
+textarea{min-height:84px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:0;border-color:#7ea798;box-shadow:0 0 0 3px rgba(35,98,87,.14);background:#fff}
+.num{font-variant-numeric:tabular-nums}
+.login-screen{min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;background:#fff}
+.login-brand{background:linear-gradient(180deg,rgba(18,49,45,.98),rgba(12,32,30,.99));color:#fff;padding:60px;display:flex;flex-direction:column;justify-content:space-between}
+.login-brand .brand{padding:0;color:#fff}.login-brand h1{font-size:42px;line-height:1.15;margin:46px 0 14px;letter-spacing:0;max-width:12ch}.login-brand p{margin:0;color:#c7d8d2;max-width:44ch;font-size:15.5px}
+.login-brand ul{list-style:none;padding:0;margin:28px 0 0;color:#dbe7e3}.login-brand li{position:relative;padding:7px 0 7px 18px}.login-brand li:before{content:"";position:absolute;left:0;top:16px;width:6px;height:6px;border-radius:50%;background:#f3b562}
+.login-foot{font-size:12px;color:#9db2ac}
+.login-panel{display:grid;place-items:center;padding:40px;background:#fff}.login-box{width:100%;max-width:410px}.login-box h2{margin:0 0 6px;color:var(--ink);font-size:28px}.login-box .hint{margin:0 0 24px;color:var(--muted)}
+.login-card{border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:22px;background:#fff}.login-demo{margin-top:14px;background:#f8faf8;border:1px solid var(--line);border-radius:8px;padding:11px 13px;color:var(--muted);font-size:12.5px}
+.app{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;background:linear-gradient(180deg,#12312d,#0d2422);color:#c7d8d2;display:flex;flex-direction:column;box-shadow:inset -1px 0 0 rgba(255,255,255,.08)}
+.brand{display:flex;align-items:center;gap:12px;padding:22px 20px 18px;color:#fff;font-weight:760}
+.brand .mark,.avatar-fallback{display:grid;place-items:center;background:#f3b562;color:#17332e;font-weight:800;border-radius:8px}
+.brand .mark{width:34px;height:34px}
+.side-doc{display:flex;gap:12px;align-items:center;padding:18px 20px;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07)}
+.side-doc img,.doctor-photo{width:44px;height:44px;border-radius:10px;object-fit:cover;border:1px solid rgba(255,255,255,.14)}
+.side-doc .nm{font-weight:700;color:#fff}.side-doc .rl{font-size:12px;color:#9bb1aa}
+.nav{padding:16px 12px;flex:1}
+.nav button{width:100%;display:flex;align-items:center;gap:10px;border:0;background:transparent;color:#c7d8d2;border-radius:8px;padding:10px 12px;text-align:left;font-weight:650}
+.nav button:before{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:rgba(255,255,255,.08);color:#fff;font-size:12px;content:attr(data-icon)}
+.nav button.active{background:#f8faf8;color:#15302d;box-shadow:0 12px 24px rgba(0,0,0,.14)}
+.nav button.active:before{background:var(--green);color:#fff}
+.nav .pill{margin-left:auto;background:rgba(255,255,255,.14);border-radius:20px;padding:1px 8px;font-size:11px}.nav button.active .pill{background:#e2ebe7;color:#18463f}
+.side-foot{padding:12px;border-top:1px solid rgba(255,255,255,.07)}.side-foot button{width:100%;text-align:left;padding:9px 12px;border:0;background:transparent;color:#a7bbb5;border-radius:8px}
+.main{padding:30px 34px 72px;max-width:1480px;min-width:0}
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding-bottom:18px;border-bottom:1px solid rgba(31,58,52,.12);margin-bottom:20px}
+.page-head h1{margin:0 0 3px;color:var(--ink);font-size:30px;letter-spacing:0}.page-head .meta{color:var(--muted);max-width:68ch}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line);border-radius:8px;background:#fff;padding:9px 14px;font-weight:700;color:var(--text)}
+.btn.primary{border:0;background:var(--green);color:#fff;box-shadow:0 10px 22px rgba(35,98,87,.18)}.btn.primary:hover{background:var(--navy-2)}
+.btn.danger{color:var(--red);border-color:var(--red-line);background:var(--red-bg)}.btn.small{padding:6px 10px;font-size:12.5px}.btn.full{width:100%}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.sumcard,.card,.panel,.attention-card,.profile-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.sumcard{position:relative;padding:16px;min-height:108px;overflow:hidden}.sumcard:after{content:"";position:absolute;left:16px;right:16px;bottom:0;height:3px;background:var(--green);opacity:.75}
+.sumcard.warn{background:var(--amber-bg);border-color:var(--amber-line)}.sumcard.warn:after{background:#d1902b}.sumcard.urgent{background:var(--red-bg);border-color:var(--red-line)}.sumcard.urgent:after{background:#d95549}
+.sumcard .k{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800}.sumcard .v{font-size:32px;color:var(--ink);font-weight:760;margin-top:10px}.sumcard .d{font-size:12.5px;color:var(--muted)}
+.sec{margin-top:28px}.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}.sec-head h2{margin:0;color:#596a64;font-size:13px;text-transform:uppercase;letter-spacing:.08em}.sec-head .note{color:var(--soft);font-size:12.5px}
+.timeline-list{display:grid;gap:12px}.appt-card,.patient-card,.follow-card{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:16px;display:grid;grid-template-columns:92px minmax(0,1.3fr) minmax(0,1.2fr) auto;gap:18px;align-items:start}
+.appt-card:hover,.patient-card:hover,.follow-card:hover{border-color:#b8c9c1}
+.time{font-size:18px;color:var(--ink);font-weight:760}.sub{font-size:12.5px;color:var(--muted);margin-top:3px}.name{font-size:16px;font-weight:760;color:var(--ink)}.label{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin-bottom:3px}
+.value{color:var(--text)}.stack{display:grid;gap:8px}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:750;padding:3px 8px;border-radius:6px;border:1px solid;white-space:nowrap}.tag:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.t-blue{color:var(--blue);background:var(--blue-bg);border-color:var(--blue-line)}.t-amber{color:var(--amber);background:var(--amber-bg);border-color:var(--amber-line)}.t-red{color:var(--red);background:var(--red-bg);border-color:var(--red-line)}.t-green{color:var(--ok);background:var(--ok-bg);border-color:var(--ok-line)}.t-grey{color:var(--muted);background:#f4f6f4;border-color:#dfe6e2}
+.attention-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.attention-card{border-left:4px solid #d1902b;padding:15px;text-align:left;width:100%}.attention-card.urgent{border-left-color:#d95549}.attention-card.clear{border-left-color:#c7d8d2}.attention-card h3{margin:0 0 2px;color:var(--ink);font-size:15.5px}.kv-mini{display:grid;grid-template-columns:96px 1fr;gap:4px 10px;margin-top:9px}.kv-mini dt{color:var(--soft);font-weight:750;font-size:12px}.kv-mini dd{margin:0}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:12px}.search{flex:1;min-width:220px}.chip{border:1px solid var(--line);background:#fff;border-radius:7px;padding:7px 11px;color:var(--muted);font-weight:700;font-size:12.5px}.chip.active{background:var(--green);border-color:var(--green);color:#fff}
+.patient-card{grid-template-columns:minmax(0,1.1fr) minmax(0,1.1fr) minmax(0,1.2fr) minmax(160px,auto)}.patient-card .current{border-left:3px solid var(--green);padding-left:10px}
+.profile-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:20px 22px;margin-bottom:14px}.profile-head h1{margin:0;color:var(--ink);font-size:28px}.profile-head .ids{color:var(--muted);margin-top:3px}.profile-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.current-summary{border-left:4px solid var(--green);background:#fbfdfb;padding:20px 22px}.current-summary h2{margin:0 0 12px;color:var(--ink);font-size:18px}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 18px}.summary-grid dt{font-size:11px;color:var(--soft);text-transform:uppercase;letter-spacing:.08em;font-weight:800;margin-bottom:4px}.summary-grid dd{margin:0;color:var(--text);font-size:14.5px}.summary-grid dd.strong{font-weight:760;color:var(--ink)}
+.two-col{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);gap:14px;margin-top:14px}.card{padding:16px}.card h2{margin:0 0 12px;color:#596a64;font-size:13px;text-transform:uppercase;letter-spacing:.08em}.info-grid{display:grid;grid-template-columns:135px 1fr;gap:7px 12px}.info-grid dt{color:var(--soft);font-size:12.5px;font-weight:750}.info-grid dd{margin:0}.history{display:grid;gap:0}.event{display:grid;grid-template-columns:110px 1fr;gap:12px;padding:12px 0;border-bottom:1px solid var(--line2)}.event:last-child{border-bottom:0}.event .date{color:var(--muted);font-size:12.5px}.event h3{margin:0 0 5px;color:var(--ink);font-size:14.5px}.event p{margin:3px 0;color:var(--text)}
+.calendar-tools{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}.seg button{border:0;background:#fff;padding:8px 16px;font-weight:750;color:var(--muted)}.seg button.active{background:var(--green);color:#fff}
+.calendar-wrap{overflow:auto;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow)}.cal-grid{display:grid;grid-template-columns:78px repeat(7,minmax(132px,1fr));min-width:1020px}.cal-head,.cal-time,.slot{border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);min-height:42px}.cal-head{position:sticky;top:0;background:#f8faf8;z-index:1;padding:10px;text-align:center}.cal-head strong{display:block;color:var(--ink)}.cal-head span{font-size:12px;color:var(--muted)}.cal-time{padding:10px;color:var(--soft);font-size:12px;background:#fbfcfb}.slot{background:#f7f8f5;padding:4px}.slot button{width:100%;height:100%;min-height:33px;border:1px dashed transparent;border-radius:6px;background:transparent;color:var(--soft);font-size:12px}.slot.available button{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok);font-weight:750}.slot.booked button{background:var(--blue-bg);border-color:var(--blue-line);color:var(--blue);font-weight:750;cursor:not-allowed}.slot.booked button:hover{transform:none}
+.book-shell{max-width:1060px;margin:0 auto;padding:28px 22px 60px}.book-hero{display:grid;grid-template-columns:126px 1fr auto;gap:20px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:22px}.book-hero img{width:126px;height:126px;border-radius:14px;object-fit:cover}.book-hero h1{margin:0;color:var(--ink);font-size:30px}.book-layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;margin-top:16px}.date-slots{display:grid;gap:12px}.date-block{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px}.slot-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.slot-pill{border:1px solid var(--ok-line);background:var(--ok-bg);color:var(--ok);border-radius:7px;padding:8px 11px;font-weight:750}.slot-pill.active{background:var(--green);border-color:var(--green);color:#fff}.confirm{background:var(--ok-bg);border:1px solid var(--ok-line);border-radius:8px;padding:14px;color:var(--ok);font-weight:750}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-grid .full{grid-column:1/-1}.field label{display:block;margin:0 0 5px;color:var(--muted);font-weight:750;font-size:12.5px}.photo-edit{display:flex;gap:14px;align-items:center}.photo-edit img{width:82px;height:82px;border-radius:12px;object-fit:cover;border:1px solid var(--line)}
+.rx-panel{grid-column:1/-1;border:1px solid var(--blue-line);background:#fbfdff;border-radius:8px;padding:14px}.rx-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px}.rx-head h3{margin:0;color:var(--ink);font-size:15px}.rx-head p{margin:3px 0 0;color:var(--muted);font-size:12.5px}.rx-actions{display:flex;gap:8px;flex-wrap:wrap}.rx-action{position:relative;overflow:hidden}.rx-action input{position:absolute;inset:0;opacity:0;cursor:pointer}.rx-preview{display:none;grid-template-columns:72px 1fr;gap:12px;align-items:start;margin-top:12px;padding-top:12px;border-top:1px solid var(--blue-line)}.rx-preview.show{display:grid}.rx-preview img{width:72px;height:72px;object-fit:cover;border:1px solid var(--line);border-radius:8px;background:#fff}.rx-preview .file{font-weight:760;color:var(--ink)}.rx-preview .parsed{margin-top:5px;color:var(--muted);font-size:12.5px}.rx-preview .parsed b{color:var(--text)}
+.empty{padding:40px 20px;text-align:center;border:1px dashed var(--line);border-radius:8px;background:#fff;color:var(--muted)}.empty h3{margin:0 0 4px;color:var(--ink)}
+.modal-backdrop{position:fixed;inset:0;background:rgba(14,28,51,.42);display:none;z-index:40}.modal-backdrop.open{display:block}.drawer{position:fixed;top:0;right:0;height:100vh;width:470px;max-width:94vw;background:#fff;z-index:50;box-shadow:-8px 0 32px rgba(14,28,51,.18);transform:translateX(102%);transition:transform .2s;display:flex;flex-direction:column}.drawer.open{transform:none}.drawer-head{padding:18px 20px;background:#f8faf8;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}.drawer-head h2{margin:0;color:var(--ink);font-size:17px}.drawer-body{padding:18px 20px;overflow:auto;flex:1}.drawer-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;background:#fafbfd}.x{border:0;background:transparent;font-size:22px;color:var(--muted);padding:0 4px}.next-options{display:grid;gap:8px}.radio-card{display:flex;gap:9px;border:1px solid var(--line);border-radius:8px;padding:11px 12px;cursor:pointer}.radio-card.active{border-color:var(--green);background:var(--mint);box-shadow:0 0 0 1px var(--green)}.radio-card input{width:auto;margin-top:3px}.toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,20px);background:#142421;color:#fff;padding:12px 18px;border-radius:8px;font-weight:700;opacity:0;pointer-events:none;transition:.2s;z-index:80}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:1080px){.app{grid-template-columns:72px 1fr}.brand span,.side-doc div,.nav span,.side-foot span{display:none}.brand{justify-content:center;padding:20px 12px}.side-doc{justify-content:center}.nav button{justify-content:center}.nav .pill{position:absolute;transform:translate(16px,-12px);padding:0 5px}.main{padding:24px 20px 64px}.summary{grid-template-columns:repeat(2,1fr)}.appt-card,.patient-card,.follow-card{grid-template-columns:1fr 1fr}.appt-card .actions,.patient-card .actions,.follow-card .actions{grid-column:1/-1;justify-content:flex-start}.two-col,.book-layout{grid-template-columns:1fr}.attention-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.login-screen{grid-template-columns:1fr}.login-brand{padding:32px 24px}.login-brand h1{font-size:32px;max-width:16ch}.page-head{display:block}.summary,.summary-grid,.form-grid{grid-template-columns:1fr}.appt-card,.patient-card,.follow-card{grid-template-columns:1fr}.book-hero{grid-template-columns:1fr}.book-hero img{width:96px;height:96px}.main{padding:18px 14px 52px}.profile-head{display:block}.profile-actions{justify-content:flex-start;margin-top:12px}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="modal-backdrop" id="backdrop" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer"></aside>
+<div class="toast" id="toast"></div>
+<script src="supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const STORE_KEY = "doctorPracticePrototype.v1";
+const LOGIN_KEY = "doctorPracticePrototype.loggedIn";
+const SUPABASE_CONFIG = window.DOCTOR_APP_CONFIG || {};
+const TODAY = "2026-08-01";
+const NEXT_STEP_LABELS = {
+  followup:"Follow-up consultation required",
+  investigation:"Investigation / test advised",
+  surgery:"Surgery advised / decision pending",
+  routine:"Routine review later",
+  none:"No further action currently"
+};
+let state = loadState();
+let ui = {screen:"today", patientId:null, week:"current", patientFilter:"All", patientSearch:"", selectedSlot:null};
+let supabaseClient = initSupabaseClient();
+let currentUser = null;
+let authReady = false;
+let publicDoctorProfile = null;
+let publicProfileLoadingFor = "";
+let publicAvailabilityLoadingFor = "";
+let patientsBackedBySupabase = false;
+let availabilityBackedBySupabase = false;
+let appointmentsBackedBySupabase = false;
+let historyBackedBySupabase = false;
+let selectedPrescriptionFile = null;
+
+function defaultState(){
+  const photo = "data:image/svg+xml;utf8," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><rect width='240' height='240' rx='28' fill='#eaf2ee'/><circle cx='120' cy='84' r='42' fill='#236257'/><path d='M48 214c12-56 132-56 144 0' fill='#236257'/><text x='120' y='232' text-anchor='middle' font-family='Arial' font-size='16' fill='#12312d'>Doctor</text></svg>`);
+  return {
+    profile:{photo, name:"Dr Ananya Mehta", specialty:"Orthopaedic Surgeon", qualification:"MBBS, MS Orthopaedics", registration:"MMC 2011/04/1432", experience:"14", clinic:"Mehta Joint & Sports Clinic", location:"Bandra West, Mumbai", address:"2nd Floor, Seaside Medical Centre, Bandra West, Mumbai", mobile:"+91 98765 43210", email:"clinic@drananyamehta.in", bio:"Independent orthopaedic practitioner focused on joint pain, sports injuries and practical follow-up care.", fee:"1200", link:"/book/dr-ananya-mehta"},
+    nextPatientNo:1009,
+    patients:[
+      p("PT-1001","Rohit Sharma","44","Male","+91 98200 12001","rohit@example.com","Andheri, Mumbai","Runner with persistent right knee pain.","Persistent right knee pain","Possible meniscal injury","MRI advised","Return with MRI report for review","2026-08-01","active"),
+      p("PT-1002","Neha Gupta","32","Female","+91 98200 12002","","Bandra, Mumbai","First visit booked for shoulder pain.","Shoulder pain for 3 weeks","","","Attend scheduled consultation","2026-08-01","new"),
+      p("PT-1003","Amit Nair","51","Male","+91 98200 12003","","Dadar, Mumbai","Knee osteoarthritis review.","Left knee osteoarthritis","Early OA flare","Continue physiotherapy","Follow-up in 2 weeks to review pain improvement","2026-08-14","active"),
+      p("PT-1004","Farah Khan","39","Female","+91 98200 12004","","Santacruz, Mumbai","Ankle swelling after sprain.","Ankle swelling after sprain","Ligament sprain suspected","X-ray ankle advised","Return with X-ray report","2026-07-29","active"),
+      p("PT-1005","Vikram Desai","58","Male","+91 98200 12005","","Juhu, Mumbai","Severe knee arthritis discussion.","Severe right knee arthritis","Advanced osteoarthritis","Knee replacement discussed","Patient considering surgery; follow-up discussion planned","2026-08-05","active"),
+      p("PT-1006","Lata Iyer","67","Female","+91 98200 12006","","Khar, Mumbai","Stable post-injection review.","Chronic shoulder stiffness","Improving adhesive capsulitis","Continue home exercises","Routine review in 1 month","2026-08-28","active"),
+      p("PT-1007","Kabir Malhotra","28","Male","+91 98200 12007","","Powai, Mumbai","Sports injury review completed.","Hamstring strain","Mild strain, improving","Gradual return to activity","No further action currently","", "closed"),
+      p("PT-1008","Priya Menon","35","Female","+91 98200 12008","","Worli, Mumbai","Future appointment booked for wrist pain.","Wrist pain after fall","","","Attend scheduled consultation","2026-08-06","active")
+    ],
+    appointments:[
+      a("AP-2001","PT-1001","2026-08-01","10:30","Review persistent knee pain","Booked"),
+      a("AP-2002","PT-1002","2026-08-01","11:30","Shoulder pain for 3 weeks","Booked"),
+      a("AP-2003","PT-1008","2026-08-06","17:00","Wrist pain after fall","Booked")
+    ],
+    availability:{}
+  };
+}
+function p(id,name,age,gender,mobile,email,address,bg,reason,assessment,plan,nextAction,expected,status){
+  const latest = id==="PT-1002" ? null : (id==="PT-1003" ? "2026-07-31" : id==="PT-1007" ? "2026-07-27" : id==="PT-1001" ? "2026-07-18" : id==="PT-1004" ? "2026-07-24" : id==="PT-1005" ? "2026-07-30" : "2026-07-20");
+  const history = [{date:id==="PT-1002"?"2026-08-01":"2026-07-10", type:"Patient created", detail:bg}];
+  if(latest) history.push({date:latest,type:"Consultation completed",reason,assessment,plan,next:nextAction});
+  return {id,name,age,gender,mobile,email,address,background:bg,reason,latestDate:latest,assessment,plan,nextAction,expected,status,history};
+}
+function a(id,patientId,date,time,reason,status){return {id,patientId,date,time,reason,status};}
+function loadState(){
+  const saved = localStorage.getItem(STORE_KEY);
+  if(saved){try{return JSON.parse(saved)}catch(e){}}
+  const s = defaultState();
+  seedAvailability(s);
+  saveState(s);
+  return s;
+}
+function saveState(s=state){localStorage.setItem(STORE_KEY, JSON.stringify(s));}
+function initSupabaseClient(){
+  const url = SUPABASE_CONFIG.SUPABASE_URL || "";
+  const anonKey = SUPABASE_CONFIG.SUPABASE_ANON_KEY || "";
+  if(!url || !anonKey || !window.supabase) return null;
+  return window.supabase.createClient(url, anonKey);
+}
+async function verifySupabaseConnection(){
+  if(!supabaseClient) return {ok:false, reason:"Supabase config missing"};
+  const {error} = await supabaseClient.from("public_doctor_profiles").select("public_slug").limit(1);
+  return {ok:!error, reason:error ? error.message : "Connected"};
+}
+function profileFromDoctorRow(row,user){
+  return {
+    photo: state.profile.photo,
+    name: row.full_name || user?.email || "Doctor",
+    specialty: row.specialty || "General Practitioner",
+    qualification: row.qualification || "",
+    registration: row.registration_number || "",
+    experience: String(row.years_experience ?? 0),
+    clinic: row.clinic_name || "",
+    location: row.clinic_location || "",
+    address: row.clinic_address || "",
+    mobile: row.mobile || "",
+    email: row.email || user?.email || "",
+    bio: row.bio || "",
+    fee: row.consultation_fee == null ? "" : String(row.consultation_fee),
+    link: row.public_slug ? `/book/${row.public_slug}` : "/book"
+  };
+}
+function doctorRowFromProfile(profile,user){
+  return {
+    id: user.id,
+    full_name: profile.name || user.email || "Doctor",
+    specialty: profile.specialty || "General Practitioner",
+    years_experience: Number(profile.experience || 0),
+    clinic_name: profile.clinic || null,
+    clinic_location: profile.location || null,
+    consultation_fee: profile.fee ? Number(profile.fee) : null,
+    qualification: profile.qualification || null,
+    registration_number: profile.registration || null,
+    clinic_address: profile.address || null,
+    mobile: profile.mobile || null,
+    email: profile.email || user.email || null,
+    bio: profile.bio || null,
+    public_slug: slugFromProfile(profile,user),
+    is_public_booking_enabled: true
+  };
+}
+function slugFromProfile(profile,user){
+  const base = (profile.name || user.email || "doctor").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,42) || "doctor";
+  return `${base}-${user.id.slice(0,8)}`;
+}
+async function loadDoctorProfile(){
+  if(!supabaseClient || !currentUser) return;
+  let {data,error} = await supabaseClient.from("doctors").select("*").eq("id", currentUser.id).maybeSingle();
+  if(error) return toast(error.message);
+  if(!data){
+    const minimum = doctorRowFromProfile({
+      ...state.profile,
+      name: currentUser.email ? currentUser.email.split("@")[0].replace(/[._-]+/g," ") : "Doctor",
+      email: currentUser.email || state.profile.email,
+      specialty: "General Practitioner",
+      experience: "0",
+      clinic: "",
+      location: "",
+      fee: ""
+    }, currentUser);
+    const inserted = await supabaseClient.from("doctors").insert(minimum).select("*").single();
+    if(inserted.error) return toast(inserted.error.message);
+    data = inserted.data;
+  }
+  state.profile = profileFromDoctorRow(data,currentUser);
+}
+function patientFromRow(row){
+  return {
+    dbId: row.id,
+    id: row.patient_number,
+    name: row.full_name,
+    mobile: row.mobile,
+    age: row.age || (row.dob || "Not added"),
+    dob: row.dob || "",
+    gender: row.gender || "Not added",
+    email: row.email || "",
+    address: row.address || "",
+    background: row.background_note || "",
+    reason: row.current_reason || "",
+    latestDate: row.latest_consultation_date || null,
+    assessment: row.current_assessment || "",
+    plan: row.current_plan || "",
+    nextAction: row.next_action || "No active next action",
+    expected: row.expected_followup_date || "",
+    status: row.status || "active",
+    history: []
+  };
+}
+function patientRowFromModel(p){
+  return {
+    doctor_id: currentUser.id,
+    patient_number: p.id,
+    full_name: p.name,
+    mobile: p.mobile,
+    age: p.age || null,
+    dob: p.dob || null,
+    gender: p.gender || null,
+    email: p.email || null,
+    address: p.address || null,
+    background_note: p.background || null,
+    current_reason: p.reason || null,
+    latest_consultation_date: p.latestDate || null,
+    current_assessment: p.assessment || null,
+    current_plan: p.plan || null,
+    next_action: p.nextAction || null,
+    expected_followup_date: p.expected || null,
+    status: p.status === "closed" ? "closed" : "active"
+  };
+}
+function nextPatientNumber(){
+  const max = state.patients.reduce((n,p)=>Math.max(n, Number(String(p.id || "").replace(/\D/g,"")) || 1000), 1000);
+  return `PT-${max + 1}`;
+}
+async function loadPatients(){
+  if(!supabaseClient || !currentUser) return;
+  const {data,error} = await supabaseClient.from("patients").select("*").order("created_at", {ascending:true});
+  if(error) return toast(error.message);
+  if(data.length){
+    state.patients = data.map(patientFromRow);
+    patientsBackedBySupabase = true;
+    state.nextPatientNo = Math.max(...state.patients.map(p=>Number(String(p.id).replace(/\D/g,"")) || 1000), 1008) + 1;
+    return;
+  }
+  state.patients = [];
+  state.nextPatientNo = 1001;
+  patientsBackedBySupabase = true;
+}
+function historyFromRow(row){
+  const c = row.consultations || {};
+  return {
+    date: row.event_date,
+    type: eventTypeLabel(row.event_type),
+    detail: row.note || "",
+    reason: c.reason || "",
+    assessment: c.assessment || "",
+    plan: row.plan || c.plan_advice || "",
+    next: row.next_action || c.next_action || "",
+    expected: row.expected_followup_date || ""
+  };
+}
+function eventTypeLabel(type){
+  return {
+    patient_created:"Patient created",
+    appointment_booked:"Appointment booked",
+    appointment_cancelled:"Appointment cancelled",
+    consultation_completed:"Consultation completed",
+    investigation_advised:"Investigation advised",
+    followup_recommended:"Follow-up recommended",
+    plan_updated:"Plan / next action updated"
+  }[type] || type;
+}
+async function loadPatientHistory(){
+  if(!supabaseClient || !currentUser) return;
+  const {data,error} = await supabaseClient
+    .from("patient_history_events")
+    .select("*,consultations(reason,assessment,plan_advice,next_action)")
+    .order("created_at", {ascending:true});
+  if(error) return toast(error.message);
+  state.patients.forEach(p => p.history = []);
+  data.forEach(row => {
+    const p = state.patients.find(x => x.dbId === row.patient_id);
+    if(p) p.history.push(historyFromRow(row));
+  });
+  state.patients.forEach(p => {
+    if(!p.history.length) p.history.push({date:TODAY,type:"Patient record",detail:"No journey events yet."});
+  });
+  historyBackedBySupabase = true;
+}
+function appointmentFromRow(row){
+  const patientNumber = row.patients?.patient_number || state.patients.find(p => p.dbId === row.patient_id)?.id || row.patient_id;
+  return {
+    id: row.id,
+    dbId: row.id,
+    patientDbId: row.patient_id,
+    patientId: patientNumber,
+    date: row.slot_date,
+    time: String(row.slot_time).slice(0,5),
+    reason: row.reason,
+    status: row.status.charAt(0).toUpperCase() + row.status.slice(1)
+  };
+}
+function appointmentStatusToDb(status){return String(status || "Booked").toLowerCase();}
+async function loadAppointments(){
+  if(!supabaseClient || !currentUser) return;
+  const {data,error} = await supabaseClient
+    .from("appointments")
+    .select("*,patients(patient_number)")
+    .order("slot_date", {ascending:true})
+    .order("slot_time", {ascending:true});
+  if(error) return toast(error.message);
+  state.appointments = data.map(appointmentFromRow);
+  appointmentsBackedBySupabase = true;
+}
+async function loadAvailability(){
+  if(!supabaseClient || !currentUser) return;
+  const start = daysForWeek("current")[0];
+  const end = daysForWeek("next")[6];
+  const {data,error} = await supabaseClient
+    .from("availability_slots")
+    .select("slot_date,slot_time,status")
+    .gte("slot_date", start)
+    .lte("slot_date", end)
+    .order("slot_date", {ascending:true})
+    .order("slot_time", {ascending:true});
+  if(error) return toast(error.message);
+  state.availability = {};
+  data.forEach(row => {
+    const time = String(row.slot_time).slice(0,5);
+    state.availability[slotKey(row.slot_date,time)] = row.status;
+  });
+  state.appointments.forEach(ap => {
+    if(ap.status !== "Cancelled") state.availability[slotKey(ap.date,ap.time)] = "booked";
+  });
+  availabilityBackedBySupabase = true;
+}
+async function saveAvailabilitySlot(date,time,status){
+  if(!supabaseClient || !currentUser) return;
+  const {error} = await supabaseClient.from("availability_slots").upsert({
+    doctor_id: currentUser.id,
+    slot_date: date,
+    slot_time: `${time}:00`,
+    status
+  }, {onConflict:"doctor_id,slot_date,slot_time"});
+  if(error) throw error;
+}
+async function loadPublicDoctorProfile(){
+  if(!supabaseClient) return;
+  const slug = bookingSlugFromHash();
+  let query = supabaseClient.from("public_doctor_profiles").select("*").limit(1);
+  if(slug) query = query.eq("public_slug", slug);
+  const {data,error} = await query.maybeSingle();
+  if(!error && data) publicDoctorProfile = data;
+}
+async function loadPublicAvailability(){
+  if(!supabaseClient) return;
+  const slug = bookingSlugFromHash() || publicDoctorProfile?.public_slug;
+  if(!slug) return;
+  const {data,error} = await supabaseClient.from("public_available_slots").select("*").eq("public_slug", slug).order("slot_date", {ascending:true}).order("slot_time", {ascending:true});
+  if(error) return;
+  state.availability = {};
+  data.forEach(row => state.availability[slotKey(row.slot_date, String(row.slot_time).slice(0,5))] = "available");
+}
+async function loadPracticeData(){
+  await loadDoctorProfile();
+  await loadPatients();
+  await loadPatientHistory();
+  await loadAppointments();
+  await loadAvailability();
+}
+async function boot(){
+  if(supabaseClient){
+    const {data} = await supabaseClient.auth.getSession();
+    currentUser = data.session?.user || null;
+    if(currentUser){
+      localStorage.setItem(LOGIN_KEY,"yes");
+      await loadPracticeData();
+    } else {
+      localStorage.removeItem(LOGIN_KEY);
+    }
+    await loadPublicDoctorProfile();
+  }
+  authReady = true;
+  handleHash();
+}
+function seedAvailability(s){
+  const slots = ["2026-08-01|18:00","2026-08-01|18:30","2026-08-03|09:00","2026-08-03|09:30","2026-08-04|12:00","2026-08-05|16:00","2026-08-06|17:30","2026-08-08|10:00"];
+  slots.forEach(k=>s.availability[k]="available");
+  s.appointments.forEach(ap=>s.availability[slotKey(ap.date,ap.time)]="booked");
+}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
+function fmtDate(iso, style="medium"){if(!iso)return "Not set"; const d = new Date(iso+"T00:00:00"); return d.toLocaleDateString("en-IN", style==="short"?{day:"2-digit",month:"short"}:{day:"2-digit",month:"short",year:"numeric"});}
+function fmtDay(iso){const d = new Date(iso+"T00:00:00"); return d.toLocaleDateString("en-IN",{weekday:"short",day:"2-digit",month:"short"});}
+function displayTime(t){let [h,m]=t.split(":").map(Number), ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${String(m).padStart(2,"0")} ${ap}`;}
+function addDays(iso,n){const d=new Date(iso+"T00:00:00");d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
+function mondayOf(iso){const d=new Date(iso+"T00:00:00");const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);return d.toISOString().slice(0,10);}
+function daysForWeek(which){const start=which==="next"?addDays(mondayOf(TODAY),7):mondayOf(TODAY);return Array.from({length:7},(_,i)=>addDays(start,i));}
+function slotKey(date,time){return `${date}|${time}`;}
+function patient(id){return state.patients.find(p=>p.id===id) || {id,name:"Patient",age:"",gender:"",mobile:"",email:"",address:"",background:"",reason:"",latestDate:null,assessment:"",plan:"",nextAction:"",expected:"",status:"active",history:[]};}
+function appt(id){return state.appointments.find(a=>a.id===id);}
+function upcomingAppt(pid){return state.appointments.filter(a=>a.patientId===pid && a.status==="Booked" && a.date>=TODAY).sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time))[0];}
+function todayAppointments(){return state.appointments.filter(a=>a.date===TODAY && a.status!=="Cancelled").sort((x,y)=>x.time.localeCompare(y.time));}
+function activeActions(){return state.patients.filter(p=>p.nextAction && !/no further action/i.test(p.nextAction));}
+function actionCategory(p){
+  if(!p.nextAction || /no further action/i.test(p.nextAction)) return "Completed / No longer active";
+  if(!p.expected) return "Upcoming";
+  if(p.expected<TODAY) return "Overdue";
+  if(p.expected===TODAY) return "Due Today";
+  return "Upcoming";
+}
+function tag(text, cls="grey"){return `<span class="tag t-${cls}">${esc(text)}</span>`;}
+function render(){
+  if(location.hash.startsWith("#book")) return renderBooking();
+  if(!authReady) return renderLoading();
+  if(!isLoggedIn()) return renderLogin();
+  const root=document.getElementById("root");
+  root.innerHTML = `<div class="app">${sidebar()}<main class="main" id="main"></main></div>`;
+  const main=document.getElementById("main");
+  if(ui.screen==="today") main.innerHTML=viewToday();
+  if(ui.screen==="calendar") main.innerHTML=viewCalendar();
+  if(ui.screen==="patients") main.innerHTML=viewPatients();
+  if(ui.screen==="followups") main.innerHTML=viewFollowups();
+  if(ui.screen==="profile") main.innerHTML=viewProfile();
+  if(ui.screen==="patient") main.innerHTML=viewPatient(ui.patientId);
+}
+function isLoggedIn(){return supabaseClient ? !!currentUser : localStorage.getItem(LOGIN_KEY) === "yes";}
+function renderLoading(){document.getElementById("root").innerHTML = `<main class="login-screen"><section class="login-panel"><div class="login-box"><h2>Loading workspace</h2><p class="hint">Checking doctor session.</p></div></section></main>`;}
+function renderLogin(){
+  const p=state.profile;
+  document.getElementById("root").innerHTML = `<main class="login-screen"><section class="login-brand"><div><div class="brand"><div class="mark">D</div><span>Practice Workspace</span></div><h1>Start the clinic day clearly.</h1><p>A lightweight workspace for appointments, patient context, consultation decisions and follow-ups.</p><ul><li>See who you are seeing today</li><li>Open patient context before consultation</li><li>Track the one next action that matters</li></ul></div><div class="login-foot">${supabaseClient?"Supabase Auth enabled":"Front-end prototype · local fallback"}</div></section><section class="login-panel"><div class="login-box"><h2>Doctor Login</h2><p class="hint">Sign in to continue to ${esc(p.name)}'s workspace.</p><form class="login-card" onsubmit="loginDoctor(event)"><div class="field"><label>Email</label><input id="loginId" value="${esc(p.email)}" autocomplete="username"></div><div class="field"><label>Password</label><input id="loginPw" type="password" value="${supabaseClient?"":"demo123"}" autocomplete="current-password"></div><button class="btn primary full" type="submit">Enter Workspace</button><div class="login-demo">${supabaseClient?"Use a Supabase doctor account. A profile row will be created after first login if needed.":"Demo only: any email/mobile and password will open the prototype."}</div></form><button class="btn full" style="margin-top:12px" onclick="location.hash='book'">Preview public booking page</button></div></section></main>`;
+}
+async function loginDoctor(event){
+  event.preventDefault();
+  if(supabaseClient){
+    const {data,error} = await supabaseClient.auth.signInWithPassword({email:val("loginId"), password:val("loginPw")});
+    if(error) return toast(error.message);
+    currentUser = data.user;
+    await loadPracticeData();
+    await loadPublicDoctorProfile();
+  }
+  localStorage.setItem(LOGIN_KEY,"yes");location.hash="";render();toast("Welcome back.");
+}
+async function logoutDoctor(){if(supabaseClient) await supabaseClient.auth.signOut();currentUser=null;localStorage.removeItem(LOGIN_KEY);location.hash="";render();}
+function sidebar(){
+  const p=state.profile, todayCount=todayAppointments().filter(a=>a.status==="Booked").length, att=activeActions().filter(p=>actionCategory(p)!=="Upcoming").length;
+  const item=(k,label,icon,pill)=>`<button data-icon="${icon}" class="${ui.screen===k?'active':''}" onclick="go('${k}')"><span>${label}</span>${pill?`<b class="pill">${pill}</b>`:""}</button>`;
+  return `<aside class="sidebar"><div class="brand"><div class="mark">D</div><span>Practice Workspace</span></div><div class="side-doc"><img src="${esc(p.photo)}" alt=""><div><div class="nm">${esc(p.name)}</div><div class="rl">${esc(p.specialty)}</div></div></div><nav class="nav">
+    ${item("today","Today","T",todayCount)}${item("calendar","Calendar","C","")}${item("patients","Patients","P",state.patients.length)}${item("followups","Follow-ups","!",att)}${item("profile","Profile","R","")}
+  </nav><div class="side-foot"><button onclick="logoutDoctor()"><span>Logout</span></button><button onclick="resetDemo()"><span>Reset demo data</span></button></div></aside>`;
+}
+function go(screen,pid){ui.screen=screen;ui.patientId=pid||null;location.hash=screen==="today"?"":screen==="patient"?`#patient/${pid}`:`#${screen}`;render();}
+function handleHash(){
+  const h=location.hash.replace("#","");
+  if(h.startsWith("patient/")){ui.screen="patient";ui.patientId=h.split("/")[1];}
+  else if(["calendar","patients","followups","profile"].includes(h)){ui.screen=h;}
+  else ui.screen="today";
+  render();
+}
+window.addEventListener("hashchange",handleHash);
+function viewToday(){
+  const p=state.profile, appts=todayAppointments(), attention=activeActions().filter(p=>["Due Today","Overdue"].includes(actionCategory(p)));
+  return `<div class="page-head"><div><h1>Today</h1><div class="meta"><img class="doctor-photo" src="${esc(p.photo)}" alt="" style="vertical-align:middle;margin-right:10px"> ${esc(p.name)} · ${fmtDate(TODAY)} · ${appts.length} appointments · ${attention.length} patient actions requiring attention</div></div><div class="actions"><button class="btn" onclick="location.hash='book'">Preview public booking</button><button class="btn primary" onclick="openPatientDrawer()">Add Patient</button></div></div>
+  <section class="summary">${sum("Appointments today",appts.length,"Chronological working list")}${sum("Booked remaining",appts.filter(a=>a.status==="Booked").length,"Still to be seen")}${sum("Needs attention",attention.length,"Due or overdue actions","urgent")}${sum("Active journeys",activeActions().length,"Patients with a next step","warn")}</section>
+  <section class="sec"><div class="sec-head"><h2>Doctor's Day</h2><span class="note">Appointment cards include context, not just time.</span></div><div class="timeline-list">${appts.map(appointmentCard).join("") || empty("No appointments today","Published slots remain visible on the booking page.")}</div></section>
+  <section class="sec"><div class="sec-head"><h2>Needs Attention</h2><span class="note">Workflow reminders, not clinical warnings.</span></div><div class="attention-grid">${attention.map(attentionCard).join("") || empty("No urgent patient actions","Patients with future review dates remain in Follow-ups.")}</div></section>`;
+}
+function sum(k,v,d,cls=""){return `<div class="sumcard ${cls}"><div class="k">${k}</div><div class="v num">${v}</div><div class="d">${d}</div></div>`;}
+function appointmentCard(ap){
+  const p=patient(ap.patientId), isNew=!p.latestDate, statusCls=ap.status==="Completed"?"green":ap.status==="Cancelled"?"red":"blue";
+  return `<article class="appt-card"><div><div class="time">${displayTime(ap.time)}</div><div class="sub">${ap.date===TODAY?"Today":fmtDay(ap.date)}</div>${tag(ap.status,statusCls)}</div>
+  <div><div class="name">${esc(p.name)}</div><div class="sub">${esc(p.age)} · ${esc(p.gender)} · ${isNew?"New Patient":"Returning Patient"}</div><div class="label" style="margin-top:10px">Reason</div><div>${esc(ap.reason)}</div></div>
+  <div class="stack"><div><div class="label">${isNew?"Previous history":"Last consultation"}</div><div>${isNew?"No previous consultation history":`${fmtDate(p.latestDate,"short")} · ${esc(p.plan||"Plan not recorded")}`}</div></div><div><div class="label">Expected today</div><div>${isNew?"Initial assessment and decide next step":esc(p.nextAction||"Review patient concern")}</div></div></div>
+  <div class="actions"><button class="btn small" onclick="go('patient','${p.id}')">Open Patient</button>${ap.status==="Booked"?`<button class="btn small primary" onclick="openConsultDrawer('${ap.id}')">Complete Consultation</button><button class="btn small danger" onclick="cancelAppointment('${ap.id}')">Cancel</button>`:""}</div></article>`;
+}
+function attentionCard(p){
+  const cat=actionCategory(p), cls=cat==="Overdue"?"urgent":"";
+  return `<button class="attention-card ${cls}" onclick="go('patient','${p.id}')"><h3>${esc(p.name)}</h3><div class="sub">${esc(p.id)} · ${esc(p.age)} · ${esc(p.gender)}</div><dl class="kv-mini"><dt>Reason</dt><dd>${esc(p.reason||"Care journey")}</dd><dt>Plan</dt><dd>${esc(p.plan||"Not recorded")}</dd><dt>Next</dt><dd>${esc(p.nextAction)}</dd><dt>Expected</dt><dd>${cat==="Due Today"?"Today":cat==="Overdue"?`Overdue since ${fmtDate(p.expected,"short")}`:fmtDate(p.expected,"short")}</dd></dl></button>`;
+}
+function viewCalendar(){
+  const days=daysForWeek(ui.week), times=[]; for(let h=8;h<21;h++){times.push(`${String(h).padStart(2,"0")}:00`,`${String(h).padStart(2,"0")}:30`);}
+  return `<div class="page-head"><div><h1>Calendar & Availability</h1><div class="meta">Current week and next week only. Click open slots to toggle availability; booked slots are locked.</div></div><div class="actions"><button class="btn primary" onclick="publishAvailability()">Save / Publish Availability</button></div></div>
+  <div class="calendar-tools"><div class="seg"><button class="${ui.week==='current'?'active':''}" onclick="ui.week='current';render()">Current Week</button><button class="${ui.week==='next'?'active':''}" onclick="ui.week='next';render()">Next Week</button></div><div class="actions">${tag("Unavailable","grey")}${tag("Available","green")}${tag("Booked","blue")}</div></div>
+  <div class="calendar-wrap"><div class="cal-grid"><div class="cal-head"></div>${days.map(d=>`<div class="cal-head"><strong>${fmtDay(d)}</strong><span>${d===TODAY?"Today":""}</span></div>`).join("")}${times.map(t=>`<div class="cal-time">${displayTime(t)}</div>${days.map(d=>calendarSlot(d,t)).join("")}`).join("")}</div></div>`;
+}
+function calendarSlot(date,time){
+  const key=slotKey(date,time), booking=state.appointments.find(a=>a.date===date&&a.time===time&&a.status!=="Cancelled"), stateName=booking?"booked":(state.availability[key]==="available"?"available":"unavailable");
+  const label=booking?`${displayTime(time)} · ${patient(booking.patientId).name}`:stateName==="available"?"Available":"";
+  return `<div class="slot ${stateName}"><button onclick="toggleSlot('${date}','${time}')" title="${esc(label||'Unavailable')}">${esc(label)}</button></div>`;
+}
+async function toggleSlot(date,time){
+  const key=slotKey(date,time); if(state.appointments.some(a=>a.date===date&&a.time===time&&a.status!=="Cancelled")) return toast("Booked slots cannot be changed.");
+  const nextStatus = state.availability[key]==="available" ? "unavailable" : "available";
+  state.availability[key]=nextStatus;
+  if(supabaseClient && currentUser){
+    try{await saveAvailabilitySlot(date,time,nextStatus);}
+    catch(error){state.availability[key]=nextStatus==="available"?"unavailable":"available"; render(); return toast(error.message);}
+  } else {
+    saveState();
+  }
+  render();
+}
+async function publishAvailability(){
+  if(supabaseClient && currentUser){
+    await loadAvailability();
+    render();
+    return toast("Availability published to Supabase.");
+  }
+  saveState(); toast("Availability published for the selected weeks.");
+}
+function viewPatients(){
+  const filters=["All","Follow-up due","Upcoming appointment","No active action"];
+  const q=ui.patientSearch.toLowerCase();
+  let list=state.patients.filter(p=>[p.name,p.mobile,p.id,p.nextAction,p.plan].join(" ").toLowerCase().includes(q));
+  if(ui.patientFilter==="Follow-up due") list=list.filter(p=>["Due Today","Overdue"].includes(actionCategory(p)));
+  if(ui.patientFilter==="Upcoming appointment") list=list.filter(p=>upcomingAppt(p.id));
+  if(ui.patientFilter==="No active action") list=list.filter(p=>actionCategory(p)==="Completed / No longer active");
+  return `<div class="page-head"><div><h1>Patients</h1><div class="meta">Every card shows where the patient currently stands without opening the record.</div></div><button class="btn primary" onclick="openPatientDrawer()">Add Patient</button></div>
+  <div class="controls"><div class="search"><input placeholder="Search patients, mobile, plan or next action" value="${esc(ui.patientSearch)}" oninput="ui.patientSearch=this.value;render()"></div>${filters.map(f=>`<button class="chip ${ui.patientFilter===f?'active':''}" onclick="ui.patientFilter='${f}';render()">${f}</button>`).join("")}</div>
+  <div class="timeline-list">${list.map(patientCard).join("") || empty("No patients match","Try another search or filter.")}</div>`;
+}
+function patientCard(p){
+  const up=upcomingAppt(p.id), cat=actionCategory(p);
+  return `<article class="patient-card"><div><div class="name">${esc(p.name)}</div><div class="sub">${esc(p.id)} · ${esc(p.age)} · ${esc(p.gender)}</div><div class="sub">${esc(p.mobile)}</div></div>
+  <div><div class="label">Last consultation</div><div>${p.latestDate?fmtDate(p.latestDate,"short"):"Not yet seen"}</div><div class="label" style="margin-top:10px">Current plan</div><div>${esc(p.plan||"Not recorded yet")}</div></div>
+  <div class="current"><div class="label">Next action</div><div>${esc(p.nextAction||"No active next action")}</div><div class="sub">${cat}${p.expected&&cat!=="Completed / No longer active"?` · ${fmtDate(p.expected,"short")}`:""}</div><div class="label" style="margin-top:10px">Upcoming appointment</div><div>${up?`${fmtDate(up.date,"short")} · ${displayTime(up.time)}`:"None"}</div></div>
+  <div class="actions"><button class="btn small" onclick="go('patient','${p.id}')">Open Patient</button></div></article>`;
+}
+function viewFollowups(){
+  const cats=["Due Today","Upcoming","Overdue","Completed / No longer active"];
+  return `<div class="page-head"><div><h1>Follow-ups</h1><div class="meta">A worklist of patients who require future attention, grouped by expected action timing.</div></div></div>${cats.map(cat=>{
+    const list=state.patients.filter(p=>actionCategory(p)===cat);
+    return `<section class="sec"><div class="sec-head"><h2>${cat}</h2><span class="note">${list.length} patient${list.length===1?"":"s"}</span></div><div class="timeline-list">${list.map(followCard).join("") || empty("Nothing here","")}</div></section>`;
+  }).join("")}`;
+}
+function followCard(p){
+  const cat=actionCategory(p), cls=cat==="Overdue"?"red":cat==="Due Today"?"amber":cat.startsWith("Completed")?"green":"blue";
+  return `<article class="follow-card"><div><div class="name">${esc(p.name)}</div><div class="sub">${esc(p.id)} · Last seen: ${p.latestDate?fmtDate(p.latestDate,"short"):"Not yet"}</div>${tag(cat,cls)}</div><div><div class="label">Current plan</div><div>${esc(p.plan||"Not recorded")}</div></div><div><div class="label">Next action</div><div>${esc(p.nextAction||"No active action")}</div><div class="sub">Expected: ${p.expected?fmtDate(p.expected,"short"):"Not set"}</div></div><div class="actions"><button class="btn small" onclick="go('patient','${p.id}')">Open Patient</button></div></article>`;
+}
+function viewProfile(){
+  const p=state.profile;
+  return `<div class="page-head"><div><h1>Doctor Profile</h1><div class="meta">Editable professional profile used by the public booking page.</div></div><div class="actions"><button class="btn" onclick="copyBookingLink()">Copy booking link</button><button class="btn" onclick="location.hash='book'">Preview public profile</button><button class="btn primary" onclick="openProfileDrawer()">Edit Profile</button></div></div>
+  <section class="profile-box card"><div class="photo-edit"><img src="${esc(p.photo)}" alt=""><div><h2 style="font-size:22px;text-transform:none;letter-spacing:0;color:var(--ink);margin-bottom:4px">${esc(p.name)}</h2><div>${esc(p.specialty)} · ${esc(p.qualification)}</div><div class="sub">${esc(p.experience)} years experience · Reg. ${esc(p.registration)}</div></div></div><dl class="info-grid" style="margin-top:18px"><dt>Clinic</dt><dd>${esc(p.clinic)}</dd><dt>Location</dt><dd>${esc(p.location)}</dd><dt>Address</dt><dd>${esc(p.address)}</dd><dt>Mobile</dt><dd>${esc(p.mobile)}</dd><dt>Email</dt><dd>${esc(p.email)}</dd><dt>Bio</dt><dd>${esc(p.bio)}</dd><dt>Consultation fee</dt><dd>${p.fee?`Rs ${esc(p.fee)}`:"Optional / not shown"}</dd><dt>Public link</dt><dd><code>${esc(p.link)}</code></dd></dl></section>`;
+}
+function viewPatient(pid){
+  const p=patient(pid); if(!p) return empty("Patient not found","");
+  const up=upcomingAppt(p.id), cat=actionCategory(p);
+  return `<button class="btn small" onclick="go('patients')" style="margin-bottom:12px">Back to Patients</button><section class="profile-head"><div><h1>${esc(p.name)}</h1><div class="ids">${esc(p.id)} · ${esc(p.age)} · ${esc(p.gender)} · ${esc(p.mobile)}</div></div><div class="profile-actions"><button class="btn" onclick="openPatientDrawer('${p.id}')">Edit Patient</button><button class="btn" onclick="openAppointmentDrawer('${p.id}')">Add Appointment</button><button class="btn" onclick="openUpdateDrawer('${p.id}')">Update Plan / Next Action</button>${up?`<button class="btn primary" onclick="openConsultDrawer('${up.id}')">Complete Consultation</button>`:""}</div></section>
+  <section class="card current-summary"><h2>Current Situation</h2><dl class="summary-grid"><div><dt>Latest consultation</dt><dd>${p.latestDate?fmtDate(p.latestDate):"No previous consultation"}</dd></div><div><dt>Reason</dt><dd class="strong">${esc(p.reason||"Not recorded")}</dd></div><div><dt>Doctor assessment</dt><dd>${esc(p.assessment||"Not recorded yet")}</dd></div><div><dt>Current plan</dt><dd class="strong">${esc(p.plan||"Not recorded yet")}</dd></div><div><dt>Next action</dt><dd class="strong">${esc(p.nextAction||"No active next action")}</dd></div><div><dt>Expected</dt><dd>${p.expected?`${fmtDate(p.expected)} · ${cat}`:cat}</dd></div></dl></section>
+  <div class="two-col"><section class="card"><h2>Patient Details</h2><dl class="info-grid"><dt>Mobile</dt><dd>${esc(p.mobile)}</dd><dt>Email</dt><dd>${esc(p.email||"Not added")}</dd><dt>Address</dt><dd>${esc(p.address||"Not added")}</dd><dt>Background</dt><dd>${esc(p.background||"No background note")}</dd><dt>Upcoming appointment</dt><dd>${up?`${fmtDate(up.date)} · ${displayTime(up.time)} · ${esc(up.reason)}`:"None scheduled"}</dd></dl></section><section class="card"><h2>Next Action</h2><div class="name">${esc(p.nextAction||"No active next action")}</div><div class="sub">${p.expected?`Expected ${fmtDate(p.expected)} · ${cat}`:"No expected date set"}</div><div class="actions" style="margin-top:14px"><button class="btn small" onclick="openAppointmentDrawer('${p.id}')">Create follow-up appointment</button><button class="btn small" onclick="openUpdateDrawer('${p.id}')">Manual update</button></div></section></div>
+  <section class="card" style="margin-top:14px"><h2>Patient History</h2><div class="history">${p.history.slice().reverse().map(eventRow).join("")}</div></section>`;
+}
+function eventRow(e){return `<div class="event"><div class="date">${fmtDate(e.date,"short")}</div><div><h3>${esc(e.type)}</h3>${e.reason?`<p><b>Reason:</b> ${esc(e.reason)}</p>`:""}${e.assessment?`<p><b>Assessment:</b> ${esc(e.assessment)}</p>`:""}${e.plan?`<p><b>Plan:</b> ${esc(e.plan)}</p>`:""}${e.next?`<p><b>Next:</b> ${esc(e.next)}</p>`:""}${e.detail?`<p>${esc(e.detail)}</p>`:""}</div></div>`;}
+function renderBooking(){
+  const requestedSlug = bookingSlugFromHash();
+  const activeSlug = requestedSlug || "__first__";
+  const needsProfile = !publicDoctorProfile || (requestedSlug && publicDoctorProfile.public_slug !== requestedSlug);
+  const needsPublicSlots = publicAvailabilityLoadingFor !== activeSlug;
+  if(supabaseClient && (needsProfile || needsPublicSlots) && publicProfileLoadingFor !== activeSlug){
+    publicProfileLoadingFor = activeSlug;
+    loadPublicDoctorProfile().then(() => loadPublicAvailability()).then(() => {
+      publicAvailabilityLoadingFor = activeSlug;
+      publicProfileLoadingFor = "";
+      renderBooking();
+    });
+  }
+  const p=publicBookingProfile(), available=Object.entries(state.availability).filter(([k,v])=>v==="available").map(([k])=>{const [date,time]=k.split("|");return {date,time};}).filter(s=>s.date>=TODAY).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const grouped={}; available.forEach(s=>(grouped[s.date]??=[]).push(s.time));
+  document.getElementById("root").innerHTML = `<div class="book-shell"><div class="actions" style="margin-bottom:12px"><button class="btn" onclick="location.hash=''">Back to doctor workspace</button></div><section class="book-hero" style="grid-template-columns:1fr auto"><div><h1>${esc(p.name)}</h1><div>${esc(p.specialty)}</div><div class="sub">${esc(p.experience)} years experience · ${esc(p.clinic)}${p.location?` · ${esc(p.location)}`:""}</div></div><div>${p.fee?tag(`Rs ${p.fee} fee`,"green"):""}</div></section><div class="book-layout"><section class="date-slots">${Object.keys(grouped).map(d=>`<div class="date-block"><div class="name">${fmtDay(d)}</div><div class="slot-row">${grouped[d].map(t=>`<button class="slot-pill ${ui.selectedSlot===slotKey(d,t)?'active':''}" onclick="ui.selectedSlot='${slotKey(d,t)}';renderBooking()">${displayTime(t)}</button>`).join("")}</div></div>`).join("") || empty("No available slots","The doctor can publish availability from Calendar.")}</section><aside class="card"><h2>Book Appointment</h2><div id="bookingConfirm"></div><div class="form-grid"><div class="field full"><label>Selected slot</label><input readonly value="${ui.selectedSlot?`${fmtDate(ui.selectedSlot.split('|')[0])} · ${displayTime(ui.selectedSlot.split('|')[1])}`:'Choose a slot'}"></div><div class="field full"><label>Full name *</label><input id="bkName"></div><div class="field full"><label>Mobile number *</label><input id="bkMobile"></div><div class="field full"><label>Email *</label><input id="bkEmail" type="email"></div><div class="field full"><label>Reason for visit *</label><textarea id="bkReason"></textarea></div><div class="field"><label>Age</label><input id="bkAge"></div><div class="field"><label>Gender</label><select id="bkGender"><option value="">Select</option><option>Female</option><option>Male</option><option>Other</option></select></div></div><button class="btn primary full" style="margin-top:12px" onclick="bookPublicAppointment()">Book Appointment</button></aside></div></div>`;
+}
+function bookingSlugFromHash(){
+  const h = location.hash.replace(/^#/,"");
+  if(!h.startsWith("book/")) return "";
+  return h.split("/")[1] || "";
+}
+function publicBookingProfile(){
+  if(publicDoctorProfile) return {
+    name: publicDoctorProfile.full_name,
+    specialty: publicDoctorProfile.specialty,
+    experience: String(publicDoctorProfile.years_experience ?? 0),
+    clinic: publicDoctorProfile.clinic_name || "",
+    location: publicDoctorProfile.clinic_location || "",
+    fee: publicDoctorProfile.consultation_fee == null ? "" : String(publicDoctorProfile.consultation_fee)
+  };
+  return {name:state.profile.name,specialty:state.profile.specialty,experience:state.profile.experience,clinic:state.profile.clinic,location:state.profile.location,fee:state.profile.fee};
+}
+async function bookPublicAppointment(){
+  if(!ui.selectedSlot) return toast("Choose an available slot first.");
+  const name=val("bkName"), mobile=val("bkMobile"), email=val("bkEmail"), reason=val("bkReason"), age=val("bkAge"), gender=val("bkGender");
+  if(!name||!mobile||!email||!reason) return toast("Name, mobile, email and reason are required.");
+  const [date,time]=ui.selectedSlot.split("|");
+  if(supabaseClient && publicDoctorProfile){
+    const {data,error} = await supabaseClient.rpc("book_public_appointment", {
+      p_public_slug: publicDoctorProfile.public_slug,
+      p_slot_date: date,
+      p_slot_time: `${time}:00`,
+      p_patient_name: name,
+      p_mobile: mobile,
+      p_patient_email: email,
+      p_reason: reason,
+      p_age: age || null,
+      p_gender: gender || null
+    });
+    if(error) return toast(error.message);
+    state.availability[slotKey(date,time)]="booked";
+    ui.selectedSlot=null;
+    document.getElementById("bookingConfirm").innerHTML=`<div class="confirm">Appointment confirmed for ${esc(name)} on ${fmtDate(date)} at ${displayTime(time)}.</div>`;
+    sendBookingConfirmation(data.appointment_id, email);
+    await loadPublicAvailability();
+    toast("Appointment booked.");
+    setTimeout(renderBooking,900);
+    return;
+  }
+  let p=state.patients.find(x=>digits(x.mobile)===digits(mobile));
+  if(!p){
+    p={id:`PT-${state.nextPatientNo++}`,name,mobile,age:age||"Not added",gender:gender||"Not added",email,address:"",background:"Created from public booking.",reason,latestDate:null,assessment:"",plan:"",nextAction:"Attend scheduled consultation",expected:date,status:"new",history:[{date:TODAY,type:"Patient created",detail:"Created automatically from public booking."}]};
+    state.patients.push(p);
+  } else {p.reason=reason; p.email=email; p.nextAction="Attend scheduled consultation"; p.expected=date; if(age) p.age=age; if(gender) p.gender=gender;}
+  const id=`AP-${Date.now()}`; state.appointments.push({id,patientId:p.id,date,time,reason,status:"Booked"}); state.availability[slotKey(date,time)]="booked"; p.history.push({date:TODAY,type:"Appointment booked",detail:`${fmtDate(date)} at ${displayTime(time)} · ${reason}`}); saveState(); ui.selectedSlot=null; document.getElementById("bookingConfirm").innerHTML=`<div class="confirm">Appointment confirmed for ${esc(name)} on ${fmtDate(date)} at ${displayTime(time)}.</div>`; toast("Appointment booked and added to the doctor's workspace."); setTimeout(renderBooking,900);
+}
+async function sendBookingConfirmation(appointmentId, patientEmail){
+  if(!supabaseClient || !appointmentId) return;
+  try {
+    const {error} = await supabaseClient.functions.invoke("send-booking-confirmation", {
+      body: {appointment_id: appointmentId, patient_email: patientEmail}
+    });
+    if(error) toast("Booking saved. Email confirmation could not be sent yet.");
+  } catch {
+    toast("Booking saved. Email confirmation could not be sent yet.");
+  }
+}
+function digits(s){return String(s).replace(/\D/g,"");}
+function openDrawer(title,body,foot){document.getElementById("drawer").innerHTML=`<div class="drawer-head"><div><h2>${title}</h2></div><button class="x" onclick="closeDrawer()">×</button></div><div class="drawer-body">${body}</div><div class="drawer-foot">${foot}</div>`;document.getElementById("backdrop").classList.add("open");document.getElementById("drawer").classList.add("open");}
+function closeDrawer(){document.getElementById("backdrop").classList.remove("open");document.getElementById("drawer").classList.remove("open");}
+function openPatientDrawer(pid){
+  const p=pid?patient(pid):{name:"",mobile:"",age:"",gender:"",email:"",address:"",background:""};
+  openDrawer(pid?"Edit Patient":"Add Patient",`<div class="form-grid"><div class="field full"><label>Name *</label><input id="ptName" value="${esc(p.name)}"></div><div class="field"><label>Mobile *</label><input id="ptMobile" value="${esc(p.mobile)}"></div><div class="field"><label>Age or DOB *</label><input id="ptAge" value="${esc(p.age)}"></div><div class="field"><label>Gender *</label><select id="ptGender"><option></option>${["Female","Male","Other"].map(g=>`<option ${p.gender===g?'selected':''}>${g}</option>`).join("")}</select></div><div class="field full"><label>Email</label><input id="ptEmail" value="${esc(p.email)}"></div><div class="field full"><label>Address / location</label><input id="ptAddress" value="${esc(p.address)}"></div><div class="field full"><label>Short background note</label><textarea id="ptBg">${esc(p.background)}</textarea></div></div>`,`<button class="btn" onclick="closeDrawer()">Cancel</button><button class="btn primary" onclick="savePatient('${pid||""}')">Save Patient</button>`);
+}
+async function savePatient(pid){
+  const name=val("ptName"), mobile=val("ptMobile"), age=val("ptAge"), gender=val("ptGender"); if(!name||!mobile||!age||!gender) return toast("Name, mobile, age/DOB and gender are required.");
+  if(pid){
+    const p = patient(pid);
+    Object.assign(p,{name,mobile,age,gender,email:val("ptEmail"),address:val("ptAddress"),background:val("ptBg")});
+    if(supabaseClient && currentUser && p.dbId){
+      const {error} = await supabaseClient.from("patients").update(patientRowFromModel(p)).eq("id", p.dbId);
+      if(error) return toast(error.message);
+      await loadPatients();
+    } else {
+      saveState();
+    }
+    closeDrawer(); render(); toast("Patient updated.");
+  }
+  else{
+    const id=nextPatientNumber();
+    const p={id,name,mobile,age,gender,email:val("ptEmail"),address:val("ptAddress"),background:val("ptBg"),reason:"",latestDate:null,assessment:"",plan:"",nextAction:"No active next action",expected:"",status:"active",history:[{date:TODAY,type:"Patient created",detail:val("ptBg")||"Added manually by doctor."}]};
+    if(supabaseClient && currentUser){
+      const {data,error} = await supabaseClient.from("patients").insert(patientRowFromModel(p)).select("*").single();
+      if(error) return toast(error.message);
+      const saved = patientFromRow(data);
+      state.patients.push(saved);
+      state.nextPatientNo = Number(saved.id.replace(/\D/g,"")) + 1;
+    } else {
+      state.patients.push(p); state.nextPatientNo++;
+      saveState();
+    }
+    closeDrawer(); go("patient",id); toast("Patient added.");
+  }
+}
+function openProfileDrawer(){
+  const p=state.profile;
+  openDrawer("Edit Doctor Profile",`<div class="photo-edit"><img id="docPhotoPreview" src="${esc(p.photo)}"><div class="field"><label>Profile photo</label><input type="file" id="docPhoto" accept="image/*" onchange="previewPhoto(this,'docPhotoPreview')"></div></div><div class="form-grid" style="margin-top:14px">${field("Full name","docName",p.name)}${field("Specialty","docSpec",p.specialty)}${field("Qualification","docQual",p.qualification)}${field("Registration number","docReg",p.registration)}${field("Years of experience","docExp",p.experience)}${field("Clinic name","docClinic",p.clinic)}${field("Location","docLoc",p.location)}${field("Mobile","docMob",p.mobile)}${field("Email","docEmail",p.email)}${field("Consultation fee","docFee",p.fee)}<div class="field full"><label>Clinic address</label><textarea id="docAddr">${esc(p.address)}</textarea></div><div class="field full"><label>Short professional bio</label><textarea id="docBio">${esc(p.bio)}</textarea></div><div class="field full"><label>Public booking link</label><input id="docLink" value="${esc(p.link)}"></div></div>`,`<button class="btn" onclick="closeDrawer()">Cancel</button><button class="btn primary" onclick="saveProfile()">Save Profile</button>`);
+}
+function field(label,id,value){return `<div class="field"><label>${label}</label><input id="${id}" value="${esc(value)}"></div>`;}
+function previewPhoto(input,imgId){const f=input.files[0];if(!f)return;const r=new FileReader();r.onload=()=>document.getElementById(imgId).src=r.result;r.readAsDataURL(f);}
+async function saveProfile(){
+  Object.assign(state.profile,{photo:document.getElementById("docPhotoPreview").src,name:val("docName"),specialty:val("docSpec"),qualification:val("docQual"),registration:val("docReg"),experience:val("docExp"),clinic:val("docClinic"),location:val("docLoc"),mobile:val("docMob"),email:val("docEmail"),fee:val("docFee"),address:val("docAddr"),bio:val("docBio"),link:val("docLink")});
+  if(supabaseClient && currentUser){
+    const {error} = await supabaseClient.from("doctors").upsert(doctorRowFromProfile(state.profile,currentUser));
+    if(error) return toast(error.message);
+    await loadDoctorProfile();
+    await loadPublicDoctorProfile();
+  } else {
+    saveState();
+  }
+  closeDrawer(); render(); toast("Profile saved.");
+}
+function openConsultDrawer(apid){
+  const ap=appt(apid), p=patient(ap.patientId);
+  openDrawer("Complete Consultation",`<div class="form-grid">${prescriptionPanel(ap,p)}<div class="field full"><label>Reason for consultation</label><input id="csReason" value="${esc(ap.reason)}"></div><div class="field full"><label>Brief clinical context / patient concern</label><textarea id="csContext">${esc(p.background||"")}</textarea></div><div class="field full"><label>Assessment / Impression</label><textarea id="csAssess"></textarea></div><div class="field full"><label>Plan / Advice</label><textarea id="csPlan"></textarea></div><div class="field full"><label>What happens next?</label><div class="next-options">${Object.entries(NEXT_STEP_LABELS).map(([k,l],i)=>`<label class="radio-card ${i===0?'active':''}" onclick="selectNext('${k}')"><input type="radio" name="nextStep" value="${k}" ${i===0?'checked':''}><span><b>${l}</b></span></label>`).join("")}</div></div><div class="field full" id="nextFields">${nextFields("followup")}</div></div>`,`<button class="btn" onclick="closeDrawer()">Cancel</button><button class="btn primary" onclick="saveConsultation('${apid}')">Save Consultation</button>`);
+}
+function prescriptionPanel(ap,p){
+  return `<section class="rx-panel"><div class="rx-head"><div><h3>Prescription upload / photo</h3><p>Use a prescription image or PDF to quickly prefill the consultation fields. Text remains editable before saving.</p></div></div><div class="rx-actions"><label class="btn small rx-action">Upload prescription<input id="rxUpload" type="file" accept="image/*,.pdf" onchange="handlePrescriptionInput(this,'upload')"></label><label class="btn small rx-action">Take photo<input id="rxCamera" type="file" accept="image/*" capture="environment" onchange="handlePrescriptionInput(this,'photo')"></label><button type="button" class="btn small" onclick="applyPrescriptionSuggestion()">Use sample prescription text</button></div><input type="hidden" id="rxFileName"><input type="hidden" id="rxMode"><div class="rx-preview" id="rxPreview"><img id="rxImage" alt=""><div><div class="file" id="rxFileLabel"></div><div class="parsed" id="rxParsed">Ready to apply suggested clinical context, assessment and plan from the prescription.</div><button type="button" class="btn small primary" style="margin-top:10px" onclick="applyPrescriptionSuggestion()">Apply to consultation fields</button></div></div></section>`;
+}
+function handlePrescriptionInput(input,mode){
+  const file=input.files && input.files[0]; if(!file) return;
+  selectedPrescriptionFile = file;
+  document.getElementById("rxFileName").value=file.name;
+  document.getElementById("rxMode").value=mode;
+  document.getElementById("rxFileLabel").textContent=`${mode==="photo"?"Photo captured":"Prescription uploaded"}: ${file.name}`;
+  document.getElementById("rxParsed").innerHTML="Suggested text is prepared locally for this prototype. Review and edit before saving.";
+  const img=document.getElementById("rxImage");
+  if(file.type.startsWith("image/")){
+    const r=new FileReader();
+    r.onload=()=>{img.src=r.result; document.getElementById("rxPreview").classList.add("show");};
+    r.readAsDataURL(file);
+  } else {
+    img.src="data:image/svg+xml;utf8," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='120' height='120' rx='12' fill='#edf3ff'/><text x='60' y='66' text-anchor='middle' font-family='Arial' font-size='22' fill='#2d5fd2'>PDF</text></svg>`);
+    document.getElementById("rxPreview").classList.add("show");
+  }
+  applyPrescriptionSuggestion();
+}
+function applyPrescriptionSuggestion(){
+  const reason=val("csReason") || "Patient concern";
+  const file=val("rxFileName");
+  const source=file ? `Prescription reviewed (${file}).` : "Prescription details reviewed.";
+  setVal("csContext", `${source}\nPatient concern: ${reason}.\nKey prescription points have been captured for consultation review.`);
+  setVal("csAssess", reason.toLowerCase().includes("knee") ? "Knee pain under evaluation; correlate symptoms with examination and imaging." : "Clinical assessment updated from prescription review; confirm findings during consultation.");
+  setVal("csPlan", reason.toLowerCase().includes("knee") ? "MRI right knee advised. Continue activity modification until review." : "Continue advised care. Review response and decide next step.");
+  toast("Prescription details applied to consultation fields.");
+}
+function selectNext(k){document.querySelectorAll(".radio-card").forEach(x=>x.classList.remove("active"));document.querySelector(`input[value="${k}"]`).closest(".radio-card").classList.add("active");document.querySelector(`input[value="${k}"]`).checked=true;document.getElementById("nextFields").innerHTML=nextFields(k);}
+function nextFields(k){
+  if(k==="followup") return `<label>Follow-up date</label><input id="nextDate" type="date" value="${addDays(TODAY,14)}"><label style="margin-top:12px">Follow-up note</label><textarea id="nextNote">Review progress</textarea>`;
+  if(k==="investigation") return `<label>Investigation / test description</label><input id="testDesc" placeholder="MRI right knee"><label style="margin-top:12px">Expected review date</label><input id="nextDate" type="date" value="${addDays(TODAY,14)}"><label style="margin-top:12px">Suggested timeframe</label><input id="timeframe" value="Review in 2 weeks">`;
+  if(k==="surgery") return `<label>Brief note</label><textarea id="nextNote">Surgery discussed; patient considering</textarea><label style="margin-top:12px">Optional expected discussion date</label><input id="nextDate" type="date" value="${addDays(TODAY,7)}">`;
+  if(k==="routine") return `<label>Suggested review date / timeframe</label><input id="nextDate" type="date" value="${addDays(TODAY,30)}"><textarea id="nextNote" style="margin-top:12px">Routine review later</textarea>`;
+  return `<div class="confirm">No active next action will remain after this consultation.</div>`;
+}
+async function uploadPrescriptionFile(ap,p,file){
+  if(!supabaseClient || !currentUser || !file || !p.dbId) return "";
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+  const path = `${currentUser.id}/${p.dbId}/${ap.dbId || ap.id}/${Date.now()}-${safeName}`;
+  const {error} = await supabaseClient.storage.from("prescriptions").upload(path,file,{upsert:false});
+  if(error){toast(`Prescription upload skipped: ${error.message}`); return "";}
+  return path;
+}
+async function saveConsultation(apid){
+  const ap=appt(apid);
+  if(!ap || ap.status !== "Booked") return toast("Completed and cancelled appointments are read-only.");
+  const p=patient(ap.patientId), kind=document.querySelector('input[name="nextStep"]:checked').value, reason=val("csReason"), assessment=val("csAssess"), context=val("csContext");
+  let plan=val("csPlan"), expected=val("nextDate"), next="", rxFile=val("rxFileName"), rxMode=val("rxMode");
+  if(kind==="investigation"){const test=val("testDesc")||"Investigation advised"; plan=plan||`${test} advised`; next=`Return for ${test} review`;}
+  if(kind==="followup"){next=val("nextNote")||"Return for follow-up consultation"; plan=plan||"Follow-up advised";}
+  if(kind==="surgery"){next=val("nextNote")||"Surgery decision pending"; plan=plan||"Surgery discussed";}
+  if(kind==="routine"){next=val("nextNote")||"Routine review later"; plan=plan||"Routine review later";}
+  if(kind==="none"){next="No further action currently"; expected=""; plan=plan||"No further action currently";}
+  if(supabaseClient && currentUser && ap.dbId && p.dbId){
+    const prescriptionPath = await uploadPrescriptionFile(ap,p,selectedPrescriptionFile);
+    const consultation = await supabaseClient.from("consultations").insert({doctor_id:currentUser.id,patient_id:p.dbId,appointment_id:ap.dbId,consultation_date:ap.date,reason,clinical_context:context,assessment,plan_advice:plan,next_action:next,expected_followup_date:expected || null,prescription_file_path:prescriptionPath || null,ocr_suggested_text:rxFile ? `${context}\n${assessment}\n${plan}` : null}).select("id").single();
+    if(consultation.error) return toast(consultation.error.message);
+    const apUpdate = await supabaseClient.from("appointments").update({status:"completed"}).eq("id",ap.dbId);
+    if(apUpdate.error) return toast(apUpdate.error.message);
+    const patientUpdate = await supabaseClient.from("patients").update({current_reason:reason,latest_consultation_date:ap.date,current_assessment:assessment,current_plan:plan,next_action:next,expected_followup_date:expected || null,status:kind==="none"?"closed":"active",background_note:context || p.background}).eq("id",p.dbId);
+    if(patientUpdate.error) return toast(patientUpdate.error.message);
+    await supabaseClient.from("patient_history_events").insert({doctor_id:currentUser.id,patient_id:p.dbId,appointment_id:ap.dbId,consultation_id:consultation.data.id,event_date:ap.date,event_type:"consultation_completed",note:rxFile?`${rxMode==="photo"?"Prescription photo captured":"Prescription uploaded"}: ${rxFile}`:"",plan,next_action:next,expected_followup_date:expected || null});
+    if(kind==="investigation") await supabaseClient.from("patient_history_events").insert({doctor_id:currentUser.id,patient_id:p.dbId,appointment_id:ap.dbId,consultation_id:consultation.data.id,event_date:ap.date,event_type:"investigation_advised",note:val("testDesc")||plan,next_action:next,expected_followup_date:expected || null});
+    if(kind==="followup"||kind==="routine") await supabaseClient.from("patient_history_events").insert({doctor_id:currentUser.id,patient_id:p.dbId,appointment_id:ap.dbId,consultation_id:consultation.data.id,event_date:ap.date,event_type:"followup_recommended",note:val("nextNote"),next_action:next,expected_followup_date:expected || null});
+    selectedPrescriptionFile = null;
+    await loadPracticeData();
+  } else {
+    ap.status="Completed"; p.reason=reason; p.latestDate=ap.date; p.assessment=assessment; p.plan=plan; p.nextAction=next; p.expected=expected; p.status=kind==="none"?"closed":"active"; p.background=context||p.background;
+    p.history.push({date:ap.date,type:"Consultation completed",reason,assessment,plan,next,detail:rxFile?`${rxMode==="photo"?"Prescription photo captured":"Prescription uploaded"}: ${rxFile}`:""}); if(kind==="investigation") p.history.push({date:ap.date,type:"Investigation advised",detail:val("testDesc")||plan,next}); if(kind==="followup"||kind==="routine") p.history.push({date:ap.date,type:"Follow-up recommended",detail:val("nextNote"),next});
+    saveState();
+  }
+  closeDrawer(); render(); toast("Consultation saved. Patient journey updated.");
+}
+function openUpdateDrawer(pid){
+  const p=patient(pid);
+  openDrawer("Update Plan / Next Action",`<div class="field"><label>Current plan</label><textarea id="upPlan">${esc(p.plan)}</textarea></div><div class="field"><label>Next action</label><select id="upNext"><option>Follow-up date changed</option><option>Investigation completed</option><option>Patient will return later</option><option>Surgery decision pending</option><option>No further action currently</option></select></div><div class="field"><label>Expected date</label><input type="date" id="upDate" value="${esc(p.expected)}"></div><div class="field"><label>Short note</label><textarea id="upNote"></textarea></div>`,`<button class="btn" onclick="closeDrawer()">Cancel</button><button class="btn primary" onclick="saveUpdate('${pid}')">Save Update</button>`);
+}
+async function saveUpdate(pid){
+  const p=patient(pid), next=val("upNext"), note=val("upNote");p.plan=val("upPlan");p.nextAction=next;p.expected=next==="No further action currently"?"":val("upDate");p.status=next==="No further action currently"?"closed":"active";
+  if(supabaseClient && currentUser && p.dbId){
+    const {error}=await supabaseClient.from("patients").update({current_plan:p.plan,next_action:next,expected_followup_date:p.expected || null,status:p.status}).eq("id",p.dbId);
+    if(error) return toast(error.message);
+    await supabaseClient.from("patient_history_events").insert({doctor_id:currentUser.id,patient_id:p.dbId,event_date:TODAY,event_type:"plan_updated",note,plan:p.plan,next_action:next,expected_followup_date:p.expected || null});
+    await loadPracticeData();
+  } else {
+    p.history.push({date:TODAY,type:"Plan / next action updated",plan:p.plan,next,detail:note});saveState();
+  }
+  closeDrawer();render();toast("Patient next action updated.");
+}
+function openAppointmentDrawer(pid){
+  const available=Object.entries(state.availability).filter(([k,v])=>v==="available").map(([k])=>k).filter(k=>k.split("|")[0]>=TODAY).sort();
+  openDrawer("Add Appointment",`<div class="field"><label>Patient</label><input readonly value="${esc(patient(pid).name)}"></div><div class="field"><label>Available slot</label><select id="apSlot">${available.map(k=>{const[d,t]=k.split("|");return `<option value="${k}">${fmtDate(d)} · ${displayTime(t)}</option>`}).join("")}</select></div><div class="field"><label>Reason for visit</label><textarea id="apReason">${esc(patient(pid).nextAction||"Follow-up consultation")}</textarea></div>${available.length?"":`<div class="confirm" style="background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber)">No available slots. Publish availability in Calendar first.</div>`}`,`<button class="btn" onclick="closeDrawer()">Cancel</button><button class="btn primary" onclick="saveAppointment('${pid}')" ${available.length?"":"disabled"}>Save Appointment</button>`);
+}
+async function saveAppointment(pid){
+  const key=val("apSlot"), [date,time]=key.split("|"), reason=val("apReason")||"Follow-up consultation", p=patient(pid);
+  if(supabaseClient && currentUser && p.dbId){
+    const {data,error} = await supabaseClient.from("appointments").insert({doctor_id:currentUser.id,patient_id:p.dbId,slot_date:date,slot_time:`${time}:00`,reason,status:"booked",created_source:"doctor"}).select("id").single();
+    if(error) return toast(error.message);
+    await supabaseClient.from("availability_slots").upsert({doctor_id:currentUser.id,slot_date:date,slot_time:`${time}:00`,status:"booked"},{onConflict:"doctor_id,slot_date,slot_time"});
+    await supabaseClient.from("patients").update({next_action:"Attend scheduled consultation",expected_followup_date:date,status:"active",current_reason:reason}).eq("id",p.dbId);
+    await supabaseClient.from("patient_history_events").insert({doctor_id:currentUser.id,patient_id:p.dbId,appointment_id:data.id,event_date:TODAY,event_type:"appointment_booked",note:`${fmtDate(date)} at ${displayTime(time)} · ${reason}`,next_action:"Attend scheduled consultation",expected_followup_date:date});
+    await loadPracticeData();
+  } else {
+    state.appointments.push({id:`AP-${Date.now()}`,patientId:pid,date,time,reason,status:"Booked"});state.availability[key]="booked";p.nextAction="Attend scheduled consultation";p.expected=date;p.history.push({date:TODAY,type:"New appointment booked",detail:`${fmtDate(date)} at ${displayTime(time)} · ${reason}`});saveState();
+  }
+  closeDrawer();render();toast("Appointment added.");
+}
+async function cancelAppointment(apid){
+  const ap=appt(apid);if(!ap)return;
+  if(ap.status!=="Booked") return toast("Completed and cancelled appointments are read-only.");
+  const p=patient(ap.patientId);
+  if(supabaseClient && currentUser && ap.dbId){
+    const {error}=await supabaseClient.from("appointments").update({status:"cancelled"}).eq("id",ap.dbId);
+    if(error) return toast(error.message);
+    await supabaseClient.from("availability_slots").upsert({doctor_id:currentUser.id,slot_date:ap.date,slot_time:`${ap.time}:00`,status:"available"},{onConflict:"doctor_id,slot_date,slot_time"});
+    if(p.dbId) await supabaseClient.from("patient_history_events").insert({doctor_id:currentUser.id,patient_id:p.dbId,appointment_id:ap.dbId,event_date:TODAY,event_type:"appointment_cancelled",note:`${fmtDate(ap.date)} at ${displayTime(ap.time)}`});
+    await loadPracticeData();
+  } else {
+    ap.status="Cancelled";state.availability[slotKey(ap.date,ap.time)]="available";p.history.push({date:TODAY,type:"Appointment cancelled",detail:`${fmtDate(ap.date)} at ${displayTime(ap.time)}`});saveState();
+  }
+  render();toast("Appointment cancelled.");
+}
+function copyBookingLink(){navigator.clipboard?.writeText(location.href.split("#")[0]+"#book");toast("Booking link copied.");}
+function val(id){const el=document.getElementById(id);return el?el.value.trim():"";}
+function setVal(id,value){const el=document.getElementById(id);if(el) el.value=value;}
+function empty(h,p){return `<div class="empty"><h3>${esc(h)}</h3>${p?`<p>${esc(p)}</p>`:""}</div>`;}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200);}
+function resetDemo(){localStorage.removeItem(STORE_KEY);state=loadState();ui={screen:"today",patientId:null,week:"current",patientFilter:"All",patientSearch:"",selectedSlot:null};location.hash="";render();toast("Demo data reset.");}
+boot();
+</script>
+</body>
+</html>
