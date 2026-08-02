@@ -64,8 +64,14 @@ Deno.serve(async (req) => {
   const fromEmail = Deno.env.get("BOOKING_EMAIL_FROM") || "pallav@aimadesimple.com";
   const fromName = Deno.env.get("BOOKING_EMAIL_FROM_NAME") || "Practice Workspace";
 
-  if (!brevoApiKey || !supabaseUrl || !serviceRoleKey) {
-    return json({error: "Email service is not configured"}, 500);
+  const missingConfig = [
+    !brevoApiKey ? "BREVO_API_KEY" : "",
+    !supabaseUrl ? "SUPABASE_URL" : "",
+    !serviceRoleKey ? "SUPABASE_SERVICE_ROLE_KEY_OR_SUPABASE_SECRET_KEYS" : "",
+  ].filter(Boolean);
+
+  if (missingConfig.length) {
+    return json({error: "Email service is not configured", missing: missingConfig}, 500);
   }
 
   let payload: BookingPayload;
@@ -87,7 +93,6 @@ Deno.serve(async (req) => {
   const appointmentRes = await fetch(appointmentUrl, {
     headers: {
       apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
     },
   });
 
