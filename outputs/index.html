@@ -96,7 +96,10 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:#7ea798;box-shado
 const STORE_KEY = "doctorPracticePrototype.v1";
 const LOGIN_KEY = "doctorPracticePrototype.loggedIn";
 const SUPABASE_CONFIG = window.DOCTOR_APP_CONFIG || {};
-const TODAY = "2026-08-01";
+const TODAY = (() => {
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+})();
 const NEXT_STEP_LABELS = {
   followup:"Follow-up consultation required",
   investigation:"Investigation / test advised",
@@ -117,6 +120,7 @@ let availabilityBackedBySupabase = false;
 let appointmentsBackedBySupabase = false;
 let historyBackedBySupabase = false;
 let selectedPrescriptionFile = null;
+let practiceRefreshInFlight = false;
 
 function defaultState(){
   const photo = "data:image/svg+xml;utf8," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><rect width='240' height='240' rx='28' fill='#eaf2ee'/><circle cx='120' cy='84' r='42' fill='#236257'/><path d='M48 214c12-56 132-56 144 0' fill='#236257'/><text x='120' y='232' text-anchor='middle' font-family='Arial' font-size='16' fill='#12312d'>Doctor</text></svg>`);
@@ -413,6 +417,15 @@ async function loadPracticeData(){
   await loadAppointments();
   await loadAvailability();
 }
+async function refreshPracticeData(){
+  if(!supabaseClient || !currentUser || practiceRefreshInFlight) return;
+  practiceRefreshInFlight = true;
+  try {
+    await loadPracticeData();
+  } finally {
+    practiceRefreshInFlight = false;
+  }
+}
 async function boot(){
   if(supabaseClient){
     const {data} = await supabaseClient.auth.getSession();
@@ -516,11 +529,12 @@ function sidebar(){
   </nav><div class="side-foot"><button onclick="logoutDoctor()"><span>Logout</span></button><button onclick="resetDemo()"><span>Reset demo data</span></button></div></aside>`;
 }
 function go(screen,pid){ui.screen=screen;ui.patientId=pid||null;location.hash=screen==="today"?"":screen==="patient"?`#patient/${pid}`:`#${screen}`;render();}
-function handleHash(){
+async function handleHash(){
   const h=location.hash.replace("#","");
   if(h.startsWith("patient/")){ui.screen="patient";ui.patientId=h.split("/")[1];}
   else if(["calendar","patients","followups","profile"].includes(h)){ui.screen=h;}
   else ui.screen="today";
+  if(currentUser && supabaseClient && !isBookingRoute()) await refreshPracticeData();
   render();
 }
 window.addEventListener("hashchange",handleHash);
