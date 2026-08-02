@@ -58,12 +58,13 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", {headers: corsHeaders});
   if (req.method !== "POST") return json({error: "Method not allowed"}, 405);
 
-  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  const brevoApiKey = Deno.env.get("BREVO_API_KEY");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = supabaseSecretKey();
-  const fromEmail = Deno.env.get("BOOKING_EMAIL_FROM") || "onboarding@resend.dev";
+  const fromEmail = Deno.env.get("BOOKING_EMAIL_FROM") || "pallav@aimadesimple.com";
+  const fromName = Deno.env.get("BOOKING_EMAIL_FROM_NAME") || "Practice Workspace";
 
-  if (!resendApiKey || !supabaseUrl || !serviceRoleKey) {
+  if (!brevoApiKey || !supabaseUrl || !serviceRoleKey) {
     return json({error: "Email service is not configured"}, 500);
   }
 
@@ -118,17 +119,21 @@ Deno.serve(async (req) => {
     </div>
   `;
 
-  const emailRes = await fetch("https://api.resend.com/emails", {
+  const emailRes = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${resendApiKey}`,
+      accept: "application/json",
+      "api-key": brevoApiKey,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: fromEmail,
-      to: [doctor.email, patient.email],
+      sender: {name: fromName, email: fromEmail},
+      to: [
+        {email: doctor.email, name: doctor.full_name},
+        {email: patient.email, name: patient.full_name},
+      ],
       subject,
-      html,
+      htmlContent: html,
     }),
   });
 

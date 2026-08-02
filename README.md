@@ -32,8 +32,9 @@ Current Supabase responsibilities:
 Set these in Supabase Dashboard before testing booking emails:
 
 ```text
-RESEND_API_KEY=your_resend_key
-BOOKING_EMAIL_FROM=onboarding@resend.dev
+BREVO_API_KEY=your_brevo_api_key
+BOOKING_EMAIL_FROM=pallav@aimadesimple.com
+BOOKING_EMAIL_FROM_NAME=Practice Workspace
 ```
 
 Do not commit real API keys.
