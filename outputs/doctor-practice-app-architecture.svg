@@ -52,7 +52,7 @@
   <text x="180" y="270" class="label">Doctor</text>
   <text x="180" y="298" class="small">Authenticated account</text>
   <text x="180" y="324" class="small">Own practice workspace</text>
-  <text x="180" y="350" class="small">Max 5 doctors in MVP</text>
+  <text x="180" y="350" class="small">Max 10 doctors in MVP</text>
 
   <rect x="95" y="420" width="260" height="145" rx="14" class="amber"/>
   <circle cx="137" cy="462" r="24" fill="#d88b18"/>

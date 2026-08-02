@@ -28,8 +28,8 @@ returns trigger
 language plpgsql
 as $$
 begin
-  if (select count(*) from public.doctors) >= 5 then
-    raise exception 'Initial MVP supports a maximum of 5 doctors';
+  if (select count(*) from public.doctors) >= 10 then
+    raise exception 'Initial MVP supports a maximum of 10 doctors';
   end if;
   return new;
 end;
