@@ -450,9 +450,20 @@ function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&l
 function fmtDate(iso, style="medium"){if(!iso)return "Not set"; const d = new Date(iso+"T00:00:00"); return d.toLocaleDateString("en-IN", style==="short"?{day:"2-digit",month:"short"}:{day:"2-digit",month:"short",year:"numeric"});}
 function fmtDay(iso){const d = new Date(iso+"T00:00:00"); return d.toLocaleDateString("en-IN",{weekday:"short",day:"2-digit",month:"short"});}
 function displayTime(t){let [h,m]=t.split(":").map(Number), ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${String(m).padStart(2,"0")} ${ap}`;}
-function addDays(iso,n){const d=new Date(iso+"T00:00:00");d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
-function mondayOf(iso){const d=new Date(iso+"T00:00:00");const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);return d.toISOString().slice(0,10);}
-function daysForWeek(which){const start=which==="next"?addDays(mondayOf(TODAY),7):mondayOf(TODAY);return Array.from({length:7},(_,i)=>addDays(start,i));}
+function isoDateLocal(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
+function parseIsoLocal(iso){const [y,m,d]=iso.split("-").map(Number);return new Date(y,m-1,d);}
+function addDays(iso,n){const d=parseIsoLocal(iso);d.setDate(d.getDate()+n);return isoDateLocal(d);}
+function mondayOf(iso){const d=parseIsoLocal(iso);const day=(d.getDay()+6)%7;d.setDate(d.getDate()-day);return isoDateLocal(d);}
+function sundayOf(iso){const d=parseIsoLocal(iso);const daysUntilSunday=(7-d.getDay())%7;d.setDate(d.getDate()+daysUntilSunday);return isoDateLocal(d);}
+function daysForWeek(which){
+  if(which==="next"){
+    const start=addDays(sundayOf(TODAY),1);
+    return Array.from({length:7},(_,i)=>addDays(start,i));
+  }
+  const end=sundayOf(TODAY);
+  const days=Math.floor((parseIsoLocal(end)-parseIsoLocal(TODAY))/86400000)+1;
+  return Array.from({length:days},(_,i)=>addDays(TODAY,i));
+}
 function slotKey(date,time){return `${date}|${time}`;}
 function patient(id){return state.patients.find(p=>p.id===id) || {id,name:"Patient",age:"",gender:"",mobile:"",email:"",address:"",background:"",reason:"",latestDate:null,assessment:"",plan:"",nextAction:"",expected:"",status:"active",history:[]};}
 function appt(id){return state.appointments.find(a=>a.id===id);}
@@ -560,9 +571,10 @@ function attentionCard(p){
 }
 function viewCalendar(){
   const days=daysForWeek(ui.week), times=[]; for(let h=8;h<21;h++){times.push(`${String(h).padStart(2,"0")}:00`,`${String(h).padStart(2,"0")}:30`);}
+  const gridStyle=`grid-template-columns:78px repeat(${days.length},minmax(132px,1fr));min-width:${78 + days.length * 132}px`;
   return `<div class="page-head"><div><h1>Calendar & Availability</h1><div class="meta">Current week and next week only. Click open slots to toggle availability; booked slots are locked.</div></div><div class="actions"><button class="btn primary" onclick="publishAvailability()">Save / Publish Availability</button></div></div>
   <div class="calendar-tools"><div class="seg"><button class="${ui.week==='current'?'active':''}" onclick="ui.week='current';render()">Current Week</button><button class="${ui.week==='next'?'active':''}" onclick="ui.week='next';render()">Next Week</button></div><div class="actions">${tag("Unavailable","grey")}${tag("Available","green")}${tag("Booked","blue")}</div></div>
-  <div class="calendar-wrap"><div class="cal-grid"><div class="cal-head"></div>${days.map(d=>`<div class="cal-head"><strong>${fmtDay(d)}</strong><span>${d===TODAY?"Today":""}</span></div>`).join("")}${times.map(t=>`<div class="cal-time">${displayTime(t)}</div>${days.map(d=>calendarSlot(d,t)).join("")}`).join("")}</div></div>`;
+  <div class="calendar-wrap"><div class="cal-grid" style="${gridStyle}"><div class="cal-head"></div>${days.map(d=>`<div class="cal-head"><strong>${fmtDay(d)}</strong><span>${d===TODAY?"Today":""}</span></div>`).join("")}${times.map(t=>`<div class="cal-time">${displayTime(t)}</div>${days.map(d=>calendarSlot(d,t)).join("")}`).join("")}</div></div>`;
 }
 function calendarSlot(date,time){
   const key=slotKey(date,time), booking=state.appointments.find(a=>a.date===date&&a.time===time&&a.status!=="Cancelled"), stateName=booking?"booked":(state.availability[key]==="available"?"available":"unavailable");
