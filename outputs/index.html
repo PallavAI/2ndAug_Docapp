@@ -447,8 +447,8 @@ function seedAvailability(s){
   s.appointments.forEach(ap=>s.availability[slotKey(ap.date,ap.time)]="booked");
 }
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
-function fmtDate(iso, style="medium"){if(!iso)return "Not set"; const d = new Date(iso+"T00:00:00"); return d.toLocaleDateString("en-IN", style==="short"?{day:"2-digit",month:"short"}:{day:"2-digit",month:"short",year:"numeric"});}
-function fmtDay(iso){const d = new Date(iso+"T00:00:00"); return d.toLocaleDateString("en-IN",{weekday:"short",day:"2-digit",month:"short"});}
+function fmtDate(iso, style="medium"){if(!iso)return "Not set"; const d = parseIsoLocal(iso); return d.toLocaleDateString("en-IN", style==="short"?{day:"2-digit",month:"short"}:{day:"2-digit",month:"short",year:"numeric"});}
+function fmtDay(iso){const d = parseIsoLocal(iso); return d.toLocaleDateString("en-IN",{weekday:"short",day:"2-digit",month:"short"});}
 function displayTime(t){let [h,m]=t.split(":").map(Number), ap=h>=12?"PM":"AM"; h=h%12||12; return `${h}:${String(m).padStart(2,"0")} ${ap}`;}
 function isoDateLocal(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function parseIsoLocal(iso){const [y,m,d]=iso.split("-").map(Number);return new Date(y,m-1,d);}
@@ -464,6 +464,7 @@ function daysForWeek(which){
   const days=Math.floor((parseIsoLocal(end)-parseIsoLocal(TODAY))/86400000)+1;
   return Array.from({length:days},(_,i)=>addDays(TODAY,i));
 }
+function weekRangeLabel(days){return `${fmtDate(days[0],"short")} - ${fmtDate(days[days.length-1],"short")}`;}
 function slotKey(date,time){return `${date}|${time}`;}
 function patient(id){return state.patients.find(p=>p.id===id) || {id,name:"Patient",age:"",gender:"",mobile:"",email:"",address:"",background:"",reason:"",latestDate:null,assessment:"",plan:"",nextAction:"",expected:"",status:"active",history:[]};}
 function appt(id){return state.appointments.find(a=>a.id===id);}
@@ -571,9 +572,10 @@ function attentionCard(p){
 }
 function viewCalendar(){
   const days=daysForWeek(ui.week), times=[]; for(let h=8;h<21;h++){times.push(`${String(h).padStart(2,"0")}:00`,`${String(h).padStart(2,"0")}:30`);}
+  const currentDays=daysForWeek("current"), nextDays=daysForWeek("next");
   const gridStyle=`grid-template-columns:78px repeat(${days.length},minmax(132px,1fr));min-width:${78 + days.length * 132}px`;
-  return `<div class="page-head"><div><h1>Calendar & Availability</h1><div class="meta">Current week and next week only. Click open slots to toggle availability; booked slots are locked.</div></div><div class="actions"><button class="btn primary" onclick="publishAvailability()">Save / Publish Availability</button></div></div>
-  <div class="calendar-tools"><div class="seg"><button class="${ui.week==='current'?'active':''}" onclick="ui.week='current';render()">Current Week</button><button class="${ui.week==='next'?'active':''}" onclick="ui.week='next';render()">Next Week</button></div><div class="actions">${tag("Unavailable","grey")}${tag("Available","green")}${tag("Booked","blue")}</div></div>
+  return `<div class="page-head"><div><h1>Calendar & Availability</h1><div class="meta">${ui.week==="current"?"Current week starts today and ends Sunday.":"Next week is Monday through Sunday."} Click open slots to toggle availability; booked slots are locked.</div></div><div class="actions"><button class="btn primary" onclick="publishAvailability()">Save / Publish Availability</button></div></div>
+  <div class="calendar-tools"><div class="seg"><button class="${ui.week==='current'?'active':''}" onclick="ui.week='current';render()">Current Week · ${weekRangeLabel(currentDays)}</button><button class="${ui.week==='next'?'active':''}" onclick="ui.week='next';render()">Next Week · ${weekRangeLabel(nextDays)}</button></div><div class="actions">${tag("Unavailable","grey")}${tag("Available","green")}${tag("Booked","blue")}</div></div>
   <div class="calendar-wrap"><div class="cal-grid" style="${gridStyle}"><div class="cal-head"></div>${days.map(d=>`<div class="cal-head"><strong>${fmtDay(d)}</strong><span>${d===TODAY?"Today":""}</span></div>`).join("")}${times.map(t=>`<div class="cal-time">${displayTime(t)}</div>${days.map(d=>calendarSlot(d,t)).join("")}`).join("")}</div></div>`;
 }
 function calendarSlot(date,time){
