@@ -395,7 +395,7 @@ async function saveAvailabilitySlot(date,time,status){
 }
 async function loadPublicDoctorProfile(){
   if(!supabaseClient) return;
-  const slug = bookingSlugFromHash();
+  const slug = bookingSlugFromHash() || (currentUser ? currentDoctorBookingSlug() : "");
   let query = supabaseClient.from("public_doctor_profiles").select("*").limit(1);
   if(slug) query = query.eq("public_slug", slug);
   const {data,error} = await query.maybeSingle();
@@ -403,7 +403,7 @@ async function loadPublicDoctorProfile(){
 }
 async function loadPublicAvailability(){
   if(!supabaseClient) return;
-  const slug = bookingSlugFromHash() || publicDoctorProfile?.public_slug;
+  const slug = bookingSlugFromHash() || (currentUser ? currentDoctorBookingSlug() : "") || publicDoctorProfile?.public_slug;
   if(!slug) return;
   const {data,error} = await supabaseClient.from("public_available_slots").select("*").eq("public_slug", slug).order("slot_date", {ascending:true}).order("slot_time", {ascending:true});
   if(error) return;
@@ -552,7 +552,7 @@ async function handleHash(){
 window.addEventListener("hashchange",handleHash);
 function viewToday(){
   const p=state.profile, appts=todayAppointments(), upcoming=futureAppointments(), attention=activeActions().filter(p=>["Due Today","Overdue"].includes(actionCategory(p)));
-  return `<div class="page-head"><div><h1>Today</h1><div class="meta"><img class="doctor-photo" src="${esc(p.photo)}" alt="" style="vertical-align:middle;margin-right:10px"> ${esc(p.name)} · ${fmtDate(TODAY)} · ${appts.length} appointments · ${attention.length} patient actions requiring attention</div></div><div class="actions"><button class="btn" onclick="location.hash='book'">Preview public booking</button><button class="btn primary" onclick="openPatientDrawer()">Add Patient</button></div></div>
+  return `<div class="page-head"><div><h1>Today</h1><div class="meta"><img class="doctor-photo" src="${esc(p.photo)}" alt="" style="vertical-align:middle;margin-right:10px"> ${esc(p.name)} · ${fmtDate(TODAY)} · ${appts.length} appointments · ${attention.length} patient actions requiring attention</div></div><div class="actions"><button class="btn" onclick="openOwnBookingPage()">Preview public booking</button><button class="btn primary" onclick="openPatientDrawer()">Add Patient</button></div></div>
   <section class="summary">${sum("Appointments today",appts.length,"Chronological working list")}${sum("Booked remaining",appts.filter(a=>a.status==="Booked").length,"Still to be seen")}${sum("Needs attention",attention.length,"Due or overdue actions","urgent")}${sum("Active journeys",activeActions().length,"Patients with a next step","warn")}</section>
   <section class="sec"><div class="sec-head"><h2>Doctor's Day</h2><span class="note">Appointment cards include context, not just time.</span></div><div class="timeline-list">${appts.map(appointmentCard).join("") || empty("No appointments today","Published slots remain visible on the booking page.")}</div></section>
   <section class="sec"><div class="sec-head"><h2>Upcoming Appointments</h2><span class="note">${upcoming.length} future booking${upcoming.length===1?"":"s"} scheduled</span></div><div class="timeline-list">${upcoming.slice(0,8).map(appointmentCard).join("") || empty("No future appointments","Future bookings will appear here after they are scheduled.")}</div></section>
@@ -634,7 +634,7 @@ function followCard(p){
 }
 function viewProfile(){
   const p=state.profile;
-  return `<div class="page-head"><div><h1>Doctor Profile</h1><div class="meta">Editable professional profile used by the public booking page.</div></div><div class="actions"><button class="btn" onclick="copyBookingLink()">Copy booking link</button><button class="btn" onclick="location.hash='book'">Preview public profile</button><button class="btn primary" onclick="openProfileDrawer()">Edit Profile</button></div></div>
+  return `<div class="page-head"><div><h1>Doctor Profile</h1><div class="meta">Editable professional profile used by the public booking page.</div></div><div class="actions"><button class="btn" onclick="copyBookingLink()">Copy booking link</button><button class="btn" onclick="openOwnBookingPage()">Preview public profile</button><button class="btn primary" onclick="openProfileDrawer()">Edit Profile</button></div></div>
   <section class="profile-box card"><div class="photo-edit"><img src="${esc(p.photo)}" alt=""><div><h2 style="font-size:22px;text-transform:none;letter-spacing:0;color:var(--ink);margin-bottom:4px">${esc(p.name)}</h2><div>${esc(p.specialty)} · ${esc(p.qualification)}</div><div class="sub">${esc(p.experience)} years experience · Reg. ${esc(p.registration)}</div></div></div><dl class="info-grid" style="margin-top:18px"><dt>Clinic</dt><dd>${esc(p.clinic)}</dd><dt>Location</dt><dd>${esc(p.location)}</dd><dt>Address</dt><dd>${esc(p.address)}</dd><dt>Mobile</dt><dd>${esc(p.mobile)}</dd><dt>Email</dt><dd>${esc(p.email)}</dd><dt>Bio</dt><dd>${esc(p.bio)}</dd><dt>Consultation fee</dt><dd>${p.fee?`Rs ${esc(p.fee)}`:"Optional / not shown"}</dd><dt>Public link</dt><dd><code>${esc(p.link)}</code></dd></dl></section>`;
 }
 function viewPatient(pid){
@@ -649,7 +649,7 @@ function eventRow(e){return `<div class="event"><div class="date">${fmtDate(e.da
 function isBookingRoute(){return location.hash.startsWith("#book") || location.pathname.split("/").includes("book");}
 function workspaceUrl(){return location.pathname.split("/").includes("book") ? "/" : location.href.split("#")[0];}
 function renderBooking(){
-  const requestedSlug = bookingSlugFromHash();
+  const requestedSlug = bookingSlugFromHash() || (currentUser ? currentDoctorBookingSlug() : "");
   const activeSlug = requestedSlug || "__first__";
   const needsProfile = !publicDoctorProfile || (requestedSlug && publicDoctorProfile.public_slug !== requestedSlug);
   const needsPublicSlots = publicAvailabilityLoadingFor !== activeSlug;
@@ -672,6 +672,12 @@ function bookingSlugFromHash(){
   const bookIndex = parts.indexOf("book");
   return bookIndex >= 0 ? (parts[bookIndex + 1] || "") : "";
 }
+function currentDoctorBookingSlug(){
+  const match = String(state.profile.link || "").match(/\/book\/([^/?#]+)/);
+  return match ? match[1] : "";
+}
+function ownBookingHash(){const slug=currentDoctorBookingSlug();return slug?`book/${slug}`:"book";}
+function openOwnBookingPage(){location.hash=ownBookingHash();}
 function publicBookingProfile(){
   if(publicDoctorProfile) return {
     name: publicDoctorProfile.full_name,
@@ -912,7 +918,7 @@ async function cancelAppointment(apid){
   }
   render();toast("Appointment cancelled.");
 }
-function copyBookingLink(){navigator.clipboard?.writeText(location.href.split("#")[0]+"#book");toast("Booking link copied.");}
+function copyBookingLink(){navigator.clipboard?.writeText(location.href.split("#")[0]+"#"+ownBookingHash());toast("Booking link copied.");}
 function val(id){const el=document.getElementById(id);return el?el.value.trim():"";}
 function setVal(id,value){const el=document.getElementById(id);if(el) el.value=value;}
 function empty(h,p){return `<div class="empty"><h3>${esc(h)}</h3>${p?`<p>${esc(p)}</p>`:""}</div>`;}
